@@ -1,0 +1,3 @@
+@echo off
+echo Iniciando HabitoFlow no Android...
+npx @react-native-community/cli@latest run-android

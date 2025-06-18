@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitoFlow - Teste Rápido</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .success {
+            color: #10B981;
+            font-weight: bold;
+        }
+        
+        .info {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            text-align: left;
+        }
+        
+        .info h3 {
+            margin-bottom: 10px;
+        }
+        
+        .info ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        
+        .info li:before {
+            content: "✓ ";
+            color: #10B981;
+            font-weight: bold;
+        }
+        
+        button {
+            background: white;
+            color: #6366F1;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span>🚀</span>
+            <span>HabitoFlow</span>
+        </h1>
+        
+        <div class="status">
+            <p class="success">✅ Ambiente de Teste Funcionando!</p>
+            <p>Versão: 0.0.1</p>
+        </div>
+        
+        <div class="info">
+            <h3>🎯 Funcionalidades do App:</h3>
+            <ul>
+                <li>Controle de hábitos diários</li>
+                <li>Sistema de streaks e conquistas</li>
+                <li>Dark mode integrado</li>
+                <li>Autenticação com Firebase</li>
+                <li>Notificações de lembrete</li>
+                <li>Estatísticas detalhadas</li>
+            </ul>
+        </div>
+        
+        <div>
+            <button onclick="testNotification()">
+                🔔 Testar Notificação
+            </button>
+            <button onclick="toggleTheme()">
+                🌙 Alternar Tema
+            </button>
+        </div>
+        
+        <div style="margin-top: 30px; opacity: 0.8;">
+            <p>Para executar o app completo:</p>
+            <code style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; display: inline-block; margin-top: 10px;">
+                npm run web
+            </code>
+        </div>
+    </div>
+    
+    <script>
+        // Testar notificação do navegador
+        function testNotification() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        new Notification('HabitoFlow', {
+                            body: '🎯 Hora de completar seus hábitos!',
+                            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">🚀</text></svg>'
+                        });
+                    } else {
+                        alert('Permissão de notificação negada');
+                    }
+                });
+            } else {
+                alert('Notificações não suportadas neste navegador');
+            }
+        }
+        
+        // Alternar tema
+        let darkMode = false;
+        function toggleTheme() {
+            darkMode = !darkMode;
+            if (darkMode) {
+                document.body.style.background = 'linear-gradient(135deg, #1E293B 0%, #334155 100%)';
+            } else {
+                document.body.style.background = 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)';
+            }
+        }
+        
+        // Animação de entrada
+        document.querySelector('.container').style.animation = 'fadeIn 0.5s ease-out';
+        
+        // Adicionar animação CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        console.log('🚀 HabitoFlow Test Page Loaded!');
+    </script>
+</body>
+</html>

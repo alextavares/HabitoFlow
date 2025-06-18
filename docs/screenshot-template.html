@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitoFlow - Screenshots Template</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 40px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+        }
+        
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+        
+        .screenshot-wrapper {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .device-frame {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            border-radius: 30px;
+            padding: 10px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .screen {
+            width: 100%;
+            aspect-ratio: 9/19.5;
+            background: #6366F1;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .status-bar {
+            height: 30px;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            font-size: 12px;
+            color: white;
+        }
+        
+        .content {
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        
+        .caption {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 16px;
+            color: #666;
+        }
+        
+        /* Telas específicas */
+        .login-screen {
+            background: linear-gradient(135deg, #6366F1 0%, #818CF8 100%);
+        }
+        
+        .home-screen {
+            background: #f8f9fa;
+            color: #333;
+        }
+        
+        .stats-screen {
+            background: #f8f9fa;
+            color: #333;
+        }
+        
+        .achievements-screen {
+            background: linear-gradient(135deg, #6366F1 0%, #818CF8 100%);
+        }
+        
+        .logo {
+            font-size: 48px;
+            margin: 40px 0;
+        }
+        
+        .habit-list {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 10px 0;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .habit-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .habit-item:last-child {
+            border-bottom: none;
+        }
+        
+        .habit-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .achievement-card {
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 10px 0;
+            color: white;
+        }
+        
+        .promo-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .promo-banner {
+            width: 100%;
+            max-width: 1024px;
+            height: 500px;
+            background: linear-gradient(135deg, #6366F1 0%, #818CF8 100%);
+            border-radius: 20px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 36px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .floating-phone {
+            position: absolute;
+            right: 50px;
+            width: 200px;
+            height: 400px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 5px;
+            transform: rotate(-10deg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .floating-phone-screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HabitoFlow - Material para Play Store</h1>
+        
+        <h2 style="margin: 40px 0 20px; color: #333;">Screenshots do App</h2>
+        
+        <div class="screenshots-grid">
+            <!-- Screenshot 1: Login -->
+            <div class="screenshot-wrapper">
+                <div class="device-frame">
+                    <div class="screen login-screen">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>100%</span>
+                        </div>
+                        <div class="content">
+                            <div class="logo">✅</div>
+                            <h2>HabitoFlow</h2>
+                            <p style="margin: 20px 0; opacity: 0.9;">Transforme seus dias em conquistas</p>
+                            <div style="background: white; color: #333; padding: 12px 24px; border-radius: 8px; margin: 20px auto; display: inline-block;">
+                                🔷 Entrar com Google
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="caption">Tela de Login - Design moderno e login social</p>
+            </div>
+            
+            <!-- Screenshot 2: Home -->
+            <div class="screenshot-wrapper">
+                <div class="device-frame">
+                    <div class="screen home-screen">
+                        <div class="status-bar" style="background: #6366F1;">
+                            <span>9:41</span>
+                            <span>100%</span>
+                        </div>
+                        <div style="background: #6366F1; color: white; padding: 20px;">
+                            <h3>Olá, João! 👋</h3>
+                            <p style="opacity: 0.9;">4 hábitos hoje • 🔥 7 dias</p>
+                        </div>
+                        <div class="content">
+                            <div class="habit-list">
+                                <div class="habit-item">
+                                    <span class="habit-icon">💧</span>
+                                    <span>Beber 2L de água</span>
+                                    <span style="margin-left: auto;">✅</span>
+                                </div>
+                                <div class="habit-item">
+                                    <span class="habit-icon">🏃</span>
+                                    <span>Exercitar 30min</span>
+                                    <span style="margin-left: auto;">⭕</span>
+                                </div>
+                                <div class="habit-item">
+                                    <span class="habit-icon">📚</span>
+                                    <span>Ler 20 páginas</span>
+                                    <span style="margin-left: auto;">✅</span>
+                                </div>
+                                <div class="habit-item">
+                                    <span class="habit-icon">🧘</span>
+                                    <span>Meditar 10min</span>
+                                    <span style="margin-left: auto;">⭕</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="caption">Tela Principal - Lista de hábitos intuitiva</p>
+            </div>
+            
+            <!-- Screenshot 3: Stats -->
+            <div class="screenshot-wrapper">
+                <div class="device-frame">
+                    <div class="screen stats-screen">
+                        <div class="status-bar" style="background: transparent;">
+                            <span>9:41</span>
+                            <span>100%</span>
+                        </div>
+                        <div class="content">
+                            <h3 style="margin-bottom: 20px;">Estatísticas</h3>
+                            <div style="display: flex; justify-content: space-around;">
+                                <div class="stat-card" style="flex: 1; margin: 5px;">
+                                    <div style="font-size: 24px;">🔥</div>
+                                    <div style="font-size: 28px; font-weight: bold; color: #6366F1;">7</div>
+                                    <div style="font-size: 12px; color: #666;">Dias</div>
+                                </div>
+                                <div class="stat-card" style="flex: 1; margin: 5px;">
+                                    <div style="font-size: 24px;">✅</div>
+                                    <div style="font-size: 28px; font-weight: bold; color: #4ECDC4;">85%</div>
+                                    <div style="font-size: 12px; color: #666;">Taxa</div>
+                                </div>
+                            </div>
+                            <div class="habit-list" style="margin-top: 20px;">
+                                <h4 style="margin-bottom: 10px;">Última Semana</h4>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 100px;">
+                                    <div style="width: 12%; background: #6366F1; height: 80%;"></div>
+                                    <div style="width: 12%; background: #6366F1; height: 100%;"></div>
+                                    <div style="width: 12%; background: #6366F1; height: 60%;"></div>
+                                    <div style="width: 12%; background: #6366F1; height: 90%;"></div>
+                                    <div style="width: 12%; background: #6366F1; height: 100%;"></div>
+                                    <div style="width: 12%; background: #6366F1; height: 70%;"></div>
+                                    <div style="width: 12%; background: #818CF8; height: 50%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="caption">Estatísticas - Acompanhe seu progresso</p>
+            </div>
+            
+            <!-- Screenshot 4: Achievements -->
+            <div class="screenshot-wrapper">
+                <div class="device-frame">
+                    <div class="screen achievements-screen">
+                        <div class="status-bar">
+                            <span>9:41</span>
+                            <span>100%</span>
+                        </div>
+                        <div class="content">
+                            <div style="text-align: center; margin: 20px 0;">
+                                <h3>Nível 3</h3>
+                                <p>Praticante</p>
+                                <p style="margin-top: 10px;">⭐ 350 pontos</p>
+                            </div>
+                            <div class="achievement-card">
+                                <div style="display: flex; align-items: center;">
+                                    <span style="font-size: 36px; margin-right: 12px;">🔥</span>
+                                    <div>
+                                        <h4>Guerreiro da Semana</h4>
+                                        <p style="font-size: 14px; opacity: 0.9;">7 dias de sequência</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="achievement-card">
+                                <div style="display: flex; align-items: center;">
+                                    <span style="font-size: 36px; margin-right: 12px;">🎯</span>
+                                    <div>
+                                        <h4>Iniciante</h4>
+                                        <p style="font-size: 14px; opacity: 0.9;">Primeiro hábito criado</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="caption">Conquistas - Sistema de gamificação motivador</p>
+            </div>
+        </div>
+        
+        <div class="promo-section">
+            <h2 style="margin-bottom: 30px; color: #333;">Banner de Recursos (Feature Graphic)</h2>
+            <div class="promo-banner">
+                <div style="flex: 1; padding: 40px; text-align: left;">
+                    <h1 style="font-size: 48px; margin-bottom: 20px;">HabitoFlow</h1>
+                    <p style="font-size: 24px; opacity: 0.9;">Transforme seus dias em conquistas</p>
+                    <div style="margin-top: 30px; font-size: 18px;">
+                        ✅ Crie hábitos facilmente<br>
+                        📊 Acompanhe seu progresso<br>
+                        🏆 Desbloqueie conquistas<br>
+                        🔔 Lembretes inteligentes
+                    </div>
+                </div>
+                <div class="floating-phone">
+                    <div class="floating-phone-screen"></div>
+                </div>
+            </div>
+            <p class="caption">Banner de Recursos - 1024 x 500 px</p>
+        </div>
+        
+        <div style="margin-top: 60px; padding: 40px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <h2 style="margin-bottom: 20px; color: #333;">Instruções para Capturas</h2>
+            <ol style="line-height: 2; color: #666;">
+                <li>Configure o emulador para <strong>Pixel 4</strong> ou similar (1080x2280)</li>
+                <li>Ative o app em modo <strong>retrato</strong></li>
+                <li>Configure alguns hábitos de exemplo com emojis variados</li>
+                <li>Complete alguns hábitos para mostrar o checkmark</li>
+                <li>Capture usando o botão de câmera do emulador</li>
+                <li>Exporte em <strong>PNG</strong> sem compressão</li>
+                <li>Para o banner, use um editor como Canva ou Figma</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
