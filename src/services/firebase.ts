@@ -224,6 +224,27 @@ export const authServices = {
       throw new Error('Nenhum usuário logado para deletar.');
     }
   },
+
+  // Atualizar dados de gamificação do usuário
+  async updateGamificationData(userId: string, gamificationData: { points?: number; unlockedAchievements?: any[] }): Promise<void> {
+    try {
+      const updateData: { [key: string]: any } = {};
+      if (gamificationData.points !== undefined) {
+        updateData.gamificationPoints = gamificationData.points;
+      }
+      if (gamificationData.unlockedAchievements !== undefined) {
+        // Salvar apenas os IDs para economizar espaço, ou os objetos completos se necessário para a UI
+        updateData.unlockedAchievementIds = gamificationData.unlockedAchievements.map(a => a.id);
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await usersCollection.doc(userId).set(updateData, { merge: true });
+      }
+    } catch (error: any) {
+      console.error('Erro ao atualizar dados de gamificação no Firestore:', error);
+      throw new Error(error.message);
+    }
+  }
 };
 
 // Serviços de Hábitos

@@ -194,10 +194,29 @@ class GamificationService {
 
   async getUserPoints(): Promise<number> {
     try {
+      // 1. Tentar ler do Firestore
+      const userData = await userServices.getUserData(this.userId);
+      if (userData && userData.gamificationPoints !== undefined) {
+        // Se leu do Firestore, garantir que AsyncStorage está sincronizado (opcional, mas bom para consistência se AsyncStorage ainda for usado)
+        // await AsyncStorage.setItem(`@points_${this.userId}`, userData.gamificationPoints.toString());
+        return userData.gamificationPoints;
+      }
+
+      // 2. Se não estiver no Firestore, tentar ler do AsyncStorage (fallback)
+      const asyncPoints = await AsyncStorage.getItem(`@points_${this.userId}`);
+      const numericAsyncPoints = asyncPoints ? parseInt(asyncPoints) : 0;
+
+      // 3. Se dados foram encontrados no AsyncStorage mas não no Firestore, sincronizar com Firestore
+      if (userData && userData.gamificationPoints === undefined && asyncPoints !== null) {
+        await userServices.updateGamificationData(this.userId, { points: numericAsyncPoints });
+      }
+
+      return numericAsyncPoints;
+    } catch (error) {
+      console.error('Erro ao buscar pontos do usuário:', error);
+      // Fallback final para AsyncStorage em caso de erro de leitura do Firestore
       const points = await AsyncStorage.getItem(`@points_${this.userId}`);
       return points ? parseInt(points) : 0;
-    } catch (error) {
-      return 0;
     }
   }
 
@@ -226,14 +245,61 @@ class GamificationService {
   }
 
   async getUserAchievements(): Promise<Achievement[]> {
+    let finalAchievements: Achievement[] = JSON.parse(JSON.stringify(ACHIEVEMENTS)); // Cópia profunda para evitar mutações no original
+
     try {
+      // 1. Tentar ler do Firestore (IDs das conquistas desbloqueadas)
+      const userData = await userServices.getUserData(this.userId);
+      let firestoreSynced = false;
+
+      if (userData && userData.unlockedAchievementIds) {
+        const unlockedIds = new Set(userData.unlockedAchievementIds);
+        finalAchievements.forEach(ach => {
+          if (unlockedIds.has(ach.id)) {
+            ach.unlocked = true;
+            // Não temos unlockedAt do Firestore aqui, poderia ser adicionado se necessário
+          }
+        });
+        firestoreSynced = true;
+        // Opcional: Sincronizar AsyncStorage se os dados do Firestore forem mais recentes ou completos
+        // await AsyncStorage.setItem(`@achievements_${this.userId}`, JSON.stringify(finalAchievements));
+      } else {
+        // 2. Se não estiver no Firestore, tentar ler do AsyncStorage (fallback)
+        const asyncAchievementsRaw = await AsyncStorage.getItem(`@achievements_${this.userId}`);
+        if (asyncAchievementsRaw) {
+          const asyncAchievements: Achievement[] = JSON.parse(asyncAchievementsRaw);
+          // Mesclar com a lista base para garantir que todas as conquistas existam e estejam atualizadas
+          // e para pegar o estado 'unlocked' do AsyncStorage.
+          const asyncMap = new Map(asyncAchievements.map(a => [a.id, a]));
+          finalAchievements.forEach(ach => {
+            const asyncAch = asyncMap.get(ach.id);
+            if (asyncAch) {
+              ach.unlocked = asyncAch.unlocked;
+              ach.unlockedAt = asyncAch.unlockedAt;
+            }
+          });
+
+          // 3. Se dados foram encontrados no AsyncStorage mas não no Firestore, sincronizar com Firestore
+          if (!firestoreSynced) { // userData.unlockedAchievementIds não existia
+            await userServices.updateGamificationData(this.userId, {
+              unlockedAchievements: finalAchievements.filter(a => a.unlocked)
+            });
+          }
+        }
+      }
+      return finalAchievements;
+    } catch (error) {
+      console.error('Erro ao buscar conquistas do usuário:', error);
+      // Fallback final para AsyncStorage em caso de erro de leitura do Firestore
       const savedAchievements = await AsyncStorage.getItem(`@achievements_${this.userId}`);
       if (savedAchievements) {
-        return JSON.parse(savedAchievements);
+        try {
+          return JSON.parse(savedAchievements);
+        } catch (parseError) {
+          return finalAchievements; // Retorna a lista base em caso de erro de parse
+        }
       }
-      return [...ACHIEVEMENTS];
-    } catch (error) {
-      return [...ACHIEVEMENTS];
+      return finalAchievements; // Retorna a lista base
     }
   }
 
@@ -309,9 +375,10 @@ class GamificationService {
         await AsyncStorage.setItem(`@achievements_${this.userId}`, JSON.stringify(achievements));
         
         // Salvar no Firebase também
-        await userServices.updateUserProfile(this.userId, {
-          achievements: achievements.filter(a => a.unlocked),
-          totalPoints: await this.getUserPoints(),
+        const currentPoints = await this.getUserPoints(); // Recarregar os pontos totais atuais
+        await userServices.updateGamificationData(this.userId, {
+          unlockedAchievements: achievements.filter(a => a.unlocked), // Passa a lista completa de achievements desbloqueados
+          points: currentPoints,
         });
       }
 

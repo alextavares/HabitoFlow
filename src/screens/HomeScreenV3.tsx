@@ -216,7 +216,30 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
         if (newMaxStreakGlobal > globalMaxStreak) {
           setGlobalMaxStreak(newMaxStreakGlobal);
         }
+
+        // Verificar conquistas após atualizar o hábito e streak
+        const updatedHabitInfo = habits.find(h => h.id === id); // Pega o hábito com streak atualizado do estado
+        if (updatedHabitInfo) {
+          const allCurrentHabits = await habitServices.getHabits(userId);
+          let completedTodayCount = 0;
+          for (const h of allCurrentHabits) {
+            if (h.id && await habitServices.isHabitCompletedOnDate(userId, h.id, new Date())) {
+              completedTodayCount++;
+            }
+          }
+
+          GamificationService.setUserId(userId);
+          GamificationService.checkAchievements({
+            streak: updatedHabitInfo.streak,
+            time: new Date(), // Hora da conclusão
+            // Para 'perfect_day', precisamos saber se TODOS os hábitos ativos foram completados
+            completedToday: completedTodayCount,
+            totalHabits: allCurrentHabits.filter(h => h.isActive).length
+          });
+        }
       }
+      // Se o hábito foi desmarcado, não há verificação de conquista de streak ou conclusão no momento.
+      // A lógica para 'lostStreak' (comeback_kid) precisaria ser mais elaborada aqui.
 
     } catch (error) {
       console.error('Erro ao alternar hábito:', error);
@@ -405,6 +428,11 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
       Alert.alert('Sucesso! 🎉', 'Hábito criado com sucesso!');
       closeAddModal();
       // A lista será atualizada automaticamente via listener
+
+      // Verificar conquistas de número de hábitos
+      const currentHabits = await habitServices.getHabits(userId);
+      GamificationService.setUserId(userId); // Garantir que o ID do usuário está configurado no serviço
+      GamificationService.checkAchievements({ totalHabits: currentHabits.length });
       
     } catch (error) {
       console.error('Erro ao criar hábito:', error);
