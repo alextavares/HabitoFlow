@@ -529,139 +529,121 @@ export const habitServices = {
        }
 
 
-      // Nova lógica de streak considerando frequência
       let currentStreak = 0;
       let maxStreak = 0;
-      let tempCurrentStreak = 0;
 
-      if (completedDates.length > 0) {
-        // --- Calcular Current Streak ---
-        const todayObj = new Date(); // Usar objeto Date para 'hoje'
-        const todayDateStr = todayObj.toISOString().split('T')[0];
+      if (completedDates.length === 0) {
+        return { currentStreak: 0, maxStreak: 0 };
+      }
 
-        let lastCheckedDate = new Date(todayObj); // Começa a verificar a partir de hoje
+      // --- Calcular Max Streak ---
+      // Inverter completedDates para iterar do mais antigo para o mais novo para maxStreak
+      const sortedCompletedDatesAsc = [...completedDates].reverse();
+      let currentSequenceStreak = 0;
+      let lastObligationDateMet: Date | null = null;
 
-        // 1. Verificar se o hábito foi feito hoje e se hoje era um dia de obrigação
-        if (completedDates.includes(todayDateStr) && isHabitScheduledForDate(habitData, todayObj)) {
-          tempCurrentStreak = 1;
-        } else if (isHabitScheduledForDate(habitData, todayObj)) {
-          // Hoje era dia de obrigação, mas não foi feito. Streak é 0.
-          tempCurrentStreak = 0;
-        } else {
-          // Hoje não era dia de obrigação. O streak depende de ontem (ou do último dia de obrigação).
-          // tempCurrentStreak permanece 0 por enquanto, será ajustado pelo loop.
-          // A data de referência para o loop será o dia anterior a hoje.
-        }
+      for (const dateStr of sortedCompletedDatesAsc) {
+        const currentDateObj = new Date(dateStr + 'T00:00:00'); // Normalizar para início do dia
 
-        // Se hoje contribuiu para o streak, ou se hoje não era dia de obrigação,
-        // continuar verificando para trás a partir do dia anterior a `lastCheckedDate`
-        // ou a partir do último dia completado se este for anterior a hoje.
-
-        let streakContinues = true;
-        let dateToExamineForCurrentStreak = new Date(todayObj);
-
-        if (tempCurrentStreak === 1) { // Se hoje foi feito e era dia de obrigação
-             dateToExamineForCurrentStreak.setDate(dateToExamineForCurrentStreak.getDate() - 1);
-        } else if (!isHabitScheduledForDate(habitData, todayObj)) { // Se hoje não era dia de obrigação
-            // Não muda dateToExamineForCurrentStreak, já é hoje, o loop vai para ontem.
-             dateToExamineForCurrentStreak.setDate(dateToExamineForCurrentStreak.getDate() - 1);
-        } else { // Hoje era dia de obrigação mas não foi feito
-            streakContinues = false;
-        }
-
-
-        if (streakContinues) {
-            for (const completedDateStr of completedDates) { // Iterar pelos logs (já estão desc)
-                const completedDateObj = new Date(completedDateStr + 'T00:00:00'); // Evitar problemas de fuso
-
-                // Se o completedDateObj é o que estamos procurando (dateToExamineForCurrentStreak)
-                // E era um dia de obrigação.
-                if (completedDateStr === dateToExamineForCurrentStreak.toISOString().split('T')[0]) {
-                    if (isHabitScheduledForDate(habitData, dateToExamineForCurrentStreak)) {
-                        if (tempCurrentStreak === 0 && completedDateStr === todayDateStr) { // Caso especial: hoje não era obrigação, mas foi feito.
-                            // Não deveria acontecer aqui por causa da lógica anterior, mas como salvaguarda.
-                            // Ou se o primeiro log é de hoje, mas hoje não era dia de obrigação (streak não deveria começar)
-                            // Esta parte da lógica é tricky.
-                            // Se o primeiro log é hoje, mas hoje não era obrigação, streak = 0.
-                        } else if (tempCurrentStreak === 0 && completedDateStr !== todayDateStr) {
-                            // Se o streak era 0, e encontramos um log anterior a hoje que era dia de obrigação
-                            tempCurrentStreak = 1;
-                        }
-                        else {
-                           tempCurrentStreak++;
-                        }
-                        dateToExamineForCurrentStreak.setDate(dateToExamineForCurrentStreak.getDate() - 1); // Próximo dia a procurar
-                    } else {
-                        // Foi completado em um dia de folga, não incrementa o streak formal, mas também não quebra necessariamente.
-                        // Apenas avançamos para o próximo dia esperado.
-                         dateToExamineForCurrentStreak.setDate(dateToExamineForCurrentStreak.getDate() - 1);
-                    }
-                } else if (completedDateObj < dateToExamineForCurrentStreak) {
-                    // Chegamos a um log mais antigo do que o dia que estamos examinando.
-                    // Precisamos verificar se os dias entre dateToExamineForCurrentStreak e completedDateObj (exclusive)
-                    // continham algum dia de obrigação.
-                    let tempCheckDate = new Date(dateToExamineForCurrentStreak);
-                    while(tempCheckDate > completedDateObj) {
-                        if (isHabitScheduledForDate(habitData, tempCheckDate)) {
-                            streakContinues = false; // Dia de obrigação pulado
-                            break;
-                        }
-                        tempCheckDate.setDate(tempCheckDate.getDate() - 1);
-                    }
-                    if (!streakContinues) break;
-
-                    // Se não quebrou, o streak continua com o completedDateObj
-                    if (isHabitScheduledForDate(habitData, completedDateObj)) {
-                         if (tempCurrentStreak === 0) tempCurrentStreak =1; else tempCurrentStreak++;
-                    }
-                    dateToExamineForCurrentStreak = new Date(completedDateObj);
-                    dateToExamineForCurrentStreak.setDate(dateToExamineForCurrentStreak.getDate() - 1);
-                }
-                // Se completedDateObj > dateToExamineForCurrentStreak, continuamos no loop de logs, pois ainda não chegamos ao dia que procuramos.
-            }
-        }
-        currentStreak = tempCurrentStreak;
-
-        // --- Calcular Max Streak ---
-        let currentMaxCalculationStreak = 0;
-        for (let i = 0; i < completedDates.length; i++) {
-          const logDate = new Date(completedDates[i] + 'T00:00:00');
-
-          if (isHabitScheduledForDate(habitData, logDate)) {
-            currentMaxCalculationStreak++;
+        if (isHabitScheduledForDate(habitData, currentDateObj)) {
+          if (currentSequenceStreak === 0) { // Começo de uma nova sequência potencial
+            currentSequenceStreak = 1;
+            lastObligationDateMet = currentDateObj;
           } else {
-            // Completou em dia de folga. Não quebra, mas também não conta para este streak específico.
-            // Se o streak anterior (currentMaxCalculationStreak) era > 0, ele termina aqui.
-            // maxStreak é atualizado, e o currentMaxCalculationStreak é resetado.
-            // No entanto, se o próximo dia de obrigação for cumprido, um novo streak começa.
-            // Para simplificar: se fez em dia de folga, não incrementa, mas também não reseta *imediatamente* o currentMaxCalculationStreak.
-            // A quebra real acontece se um dia de OBRIGAÇÃO é pulado.
-          }
-          maxStreak = Math.max(maxStreak, currentMaxCalculationStreak);
-
-          // Verificar o intervalo até o próximo log
-          if (i + 1 < completedDates.length) {
-            let prevLogDateForMax = new Date(completedDates[i] + 'T00:00:00');
-            const nextLogDateForMax = new Date(completedDates[i+1] + 'T00:00:00');
-
-            let dayInInterval = new Date(prevLogDateForMax);
-            dayInInterval.setDate(dayInInterval.getDate() - 1);
+            // Verificar continuidade da sequência a partir de lastObligationDateMet
+            let expectedPrevDate = new Date(lastObligationDateMet!); // Sabemos que não é null aqui
+            expectedPrevDate.setDate(expectedPrevDate.getDate() + 1); // Dia seguinte a lastObligationDateMet
 
             let obligationSkipped = false;
-            while (dayInInterval > nextLogDateForMax) {
-              if (isHabitScheduledForDate(habitData, dayInInterval)) {
+            while (expectedPrevDate < currentDateObj) {
+              if (isHabitScheduledForDate(habitData, expectedPrevDate)) {
                 obligationSkipped = true; // Um dia de obrigação foi pulado
                 break;
               }
-              dayInInterval.setDate(dayInInterval.getDate() - 1);
+              expectedPrevDate.setDate(expectedPrevDate.getDate() + 1);
             }
 
             if (obligationSkipped) {
-              currentMaxCalculationStreak = 0; // Reseta o streak porque um dia de obrigação foi pulado
+              // Quebrou a sequência, currentSequenceStreak já foi contabilizado em maxStreak na iteração anterior.
+              // Inicia nova sequência.
+              currentSequenceStreak = 1;
+            } else {
+              // Não houve dia de obrigação pulado, e currentDateObj é um dia de obrigação.
+              // A sequência continua.
+              currentSequenceStreak++;
             }
+            lastObligationDateMet = currentDateObj;
           }
+        } else {
+          // Completou em um dia de folga. Não quebra o streak atual de dias de obrigação,
+          // nem o incrementa. lastObligationDateMet permanece o mesmo.
+          // Apenas atualizamos maxStreak com o que temos até agora.
         }
-        maxStreak = Math.max(maxStreak, currentMaxCalculationStreak); // Considerar o último streak
+        maxStreak = Math.max(maxStreak, currentSequenceStreak);
+      }
+      // maxStreak = Math.max(maxStreak, currentSequenceStreak); // Final check
+
+      // --- Calcular Current Streak ---
+      // Iterar do mais recente (completedDates[0]) para trás
+      currentStreak = 0;
+      let expectedCurrentDate = new Date(); // "Hoje"
+      expectedCurrentDate.setHours(0, 0, 0, 0); // Normalizar para início do dia
+
+      for (let i = 0; i < completedDates.length; i++) {
+        const completedDateObj = new Date(completedDates[i] + 'T00:00:00'); // Normalizar
+
+        if (i === 0) { // Processando o log mais recente
+          // Se o log mais recente não for hoje nem ontem, o currentStreak é 0 (a menos que hoje/ontem não fossem dias de obrigação)
+          // Ou se o log mais recente não for um dia de obrigação, o currentStreak é 0.
+          if (!isHabitScheduledForDate(habitData, completedDateObj)) {
+            break; // O log mais recente não foi num dia de obrigação, então currentStreak é 0.
+          }
+          // Se o log mais recente foi num dia de obrigação, mas não é "hoje" nem "ontem" (considerando dias de folga entre eles)
+          // precisamos verificar se "hoje" ou "ontem" eram dias de obrigação e foram pulados.
+          let dateToCheck = new Date(expectedCurrentDate); // "Hoje"
+          let firstLogIsRelevantForStreak = false;
+
+          while(dateToCheck >= completedDateObj) {
+            if (dateToCheck.getTime() === completedDateObj.getTime()) { // O log é o dia que estamos verificando
+                if (isHabitScheduledForDate(habitData, dateToCheck)) {
+                    firstLogIsRelevantForStreak = true;
+                } // Se não era dia de obrigação, mas foi feito, não inicia streak.
+                break;
+            }
+            // Se dateToCheck era um dia de obrigação e não está no log, então o streak não pode começar hoje/ontem.
+            if (isHabitScheduledForDate(habitData, dateToCheck)) {
+                 firstLogIsRelevantForStreak = false;
+                 break;
+            }
+            dateToCheck.setDate(dateToCheck.getDate() -1);
+          }
+          if (!firstLogIsRelevantForStreak) break; // Streak não pode começar com o log mais recente.
+        }
+
+        // Se chegamos aqui, completedDates[i] é um dia de obrigação que faz parte do streak atual.
+        currentStreak++;
+
+        // Definir o próximo `expectedPreviousObligationDate`
+        let expectedPreviousObligationDate = new Date(completedDateObj);
+        expectedPreviousObligationDate.setDate(expectedPreviousObligationDate.getDate() - 1);
+
+        while (!isHabitScheduledForDate(habitData, expectedPreviousObligationDate)) {
+            expectedPreviousObligationDate.setDate(expectedPreviousObligationDate.getDate() - 1);
+            // Adicionar uma salvaguarda para não entrar em loop infinito se algo der muito errado
+            if (expectedPreviousObligationDate < new Date('2000-01-01')) {
+                 console.error("Loop de data inesperado em currentStreak");
+                 return { currentStreak: 0, maxStreak: 0}; // Saída de emergência
+            }
+        }
+
+        // Verificar se o próximo log (completedDates[i+1]) corresponde a expectedPreviousObligationDate
+        if (i + 1 < completedDates.length) {
+          if (completedDates[i+1] !== expectedPreviousObligationDate.toISOString().split('T')[0]) {
+            break; // Quebrou a sequência de dias de obrigação
+          }
+        } else {
+          break; // Não há mais logs para continuar o streak
+        }
       }
 
       return { 
