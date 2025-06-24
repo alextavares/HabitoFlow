@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../contexts/ThemeContext';
-import { userServices } from '../services/firebase';
+import { habitServices, authServices } from '../services/firebase'; // Corrigido
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
@@ -37,88 +37,99 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ user }) => {
 
   useEffect(() => {
     loadStats();
-  }, []);
+  }, [user.uid]); // Adicionado user.uid como dependência
 
   const loadStats = async () => {
+    setLoading(true);
     try {
-      // Carregar streak geral
-      const userStreak = await AsyncStorage.getItem(`@streak_${user.uid}`);
-      if (userStreak) setOverallStreak(parseInt(userStreak));
+      const userId = user.uid; // Usar user.uid diretamente das props
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
 
-      // Carregar hábitos
-      const habits = await userServices.getUserHabits(user.uid);
-      setTotalHabits(habits.length);
+      const firebaseHabits = await habitServices.getHabits(userId);
+      setTotalHabits(firebaseHabits.length);
 
-      // Calcular estatísticas por hábito
-      const stats: HabitStats[] = [];
-      let todayCompleted = 0;
-      const today = new Date().toDateString();
+      let todayCompletedCount = 0;
+      const processedHabitStats: HabitStats[] = [];
+      const allCompletedDatesForWeek: string[] = [];
 
-      for (const habit of habits) {
-        const completedDates = habit.completedDates || [];
-        const totalDays = Math.floor((Date.now() - habit.createdAt.toDate().getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        const completedDays = completedDates.length;
-        const percentage = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
+      for (const habit of firebaseHabits) {
+        if (!habit.id) continue;
 
-        // Calcular streak do hábito
-        let streak = 0;
-        const sortedDates = [...completedDates].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-        if (sortedDates.length > 0) {
-          const lastDate = new Date(sortedDates[0]);
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          
-          if (lastDate.toDateString() === today || lastDate.toDateString() === yesterday.toDateString()) {
-            streak = 1;
-            for (let i = 1; i < sortedDates.length; i++) {
-              const currentDate = new Date(sortedDates[i]);
-              const prevDate = new Date(sortedDates[i - 1]);
-              const diffDays = Math.floor((prevDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
-              
-              if (diffDays === 1) {
-                streak++;
-              } else {
-                break;
-              }
+        const { currentStreak } = await habitServices.calculateStreak(userId, habit.id);
+
+        const startDate = new Date(habit.createdAt);
+        const endDate = new Date();
+        const logs = await habitServices.getHabitLogs(userId, habit.id, startDate, endDate);
+
+        const completedDays = logs.filter(log => log.completed).length;
+        const isCompletedToday = await habitServices.isHabitCompletedOnDate(userId, habit.id, new Date());
+        if (isCompletedToday) {
+          todayCompletedCount++;
+        }
+
+        logs.filter(l => l.completed && l.date).forEach(l => {
+            // Garantir que l.date é uma string antes de adicionar
+            if (typeof l.date === 'string') {
+                 allCompletedDatesForWeek.push(l.date);
+            } else if (l.date instanceof Date) {
+                 allCompletedDatesForWeek.push(l.date.toISOString().split('T')[0]);
+            }
+        });
+
+        const totalDaysSinceCreation = Math.floor((endDate.getTime() - new Date(habit.createdAt).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const percentage = totalDaysSinceCreation > 0 ? Math.round((completedDays / totalDaysSinceCreation) * 100) : 0;
+
+        processedHabitStats.push({
+          name: habit.name,
+          completedDays,
+          totalDays: totalDaysSinceCreation,
+          percentage,
+          streak: currentStreak,
+        });
+      }
+
+      setHabitStats(processedHabitStats);
+      setCompletedToday(todayCompletedCount);
+
+      const weekDataStats = Array(7).fill(0);
+      const today = new Date();
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(today.getDate() - 6); // Inclui hoje e os 6 dias anteriores
+
+      // Coletar todos os logs relevantes de uma vez para otimizar
+      const allLogsLast7DaysByHabit: { [habitId: string]: any[] } = {};
+      for (const habit of firebaseHabits) {
+        if (habit.id) {
+          allLogsLast7DaysByHabit[habit.id] = await habitServices.getHabitLogs(userId, habit.id, sevenDaysAgo, today);
+        }
+      }
+
+      for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(today);
+        currentDate.setDate(today.getDate() - i);
+        const dateStr = currentDate.toISOString().split('T')[0];
+        
+        const completedHabitsOnThisDay = new Set<string>();
+        for (const habit of firebaseHabits) {
+          if (habit.id) {
+            const logsForHabit = allLogsLast7DaysByHabit[habit.id] || [];
+            if (logsForHabit.some(log => log.date === dateStr && log.completed)) {
+              completedHabitsOnThisDay.add(habit.id);
             }
           }
         }
-
-        stats.push({
-          name: habit.name,
-          completedDays,
-          totalDays,
-          percentage,
-          streak,
-        });
-
-        if (completedDates.includes(today)) {
-          todayCompleted++;
-        }
+        // Os dados são preenchidos do dia mais recente para o mais antigo no array weekDataStats
+        // Se o gráfico exibe da esquerda para a direita (mais antigo para mais novo), então o índice deve ser 6-i
+        weekDataStats[6 - i] = completedHabitsOnThisDay.size;
       }
+      setWeeklyData(weekDataStats);
 
-      setHabitStats(stats);
-      setCompletedToday(todayCompleted);
+      const maxIndividualStreak = Math.max(0, ...processedHabitStats.map(s => s.streak));
+      setOverallStreak(maxIndividualStreak);
 
-      // Calcular dados semanais
-      const weekData = [0, 0, 0, 0, 0, 0, 0];
-      const now = new Date();
-      
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toDateString();
-        
-        let dayCount = 0;
-        for (const habit of habits) {
-          if (habit.completedDates?.includes(dateStr)) {
-            dayCount++;
-          }
-        }
-        weekData[6 - i] = dayCount;
-      }
-      
-      setWeeklyData(weekData);
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
     } finally {

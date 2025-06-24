@@ -197,6 +197,33 @@ export const authServices = {
   onAuthStateChanged(callback: (user: any) => void) {
     return authService.onAuthStateChanged(callback);
   },
+
+  // Deletar conta do usuário
+  async deleteAccount(): Promise<void> {
+    const currentUser = authService.currentUser;
+    if (currentUser) {
+      try {
+        // 1. Deletar dados do Firestore (documento principal do usuário)
+        // Implementação de exclusão de subcoleções (hábitos, logs) seria mais complexa
+        // e pode ser feita via Cloud Function ou manualmente no cliente (mais chamadas).
+        // Por agora, vamos deletar apenas o documento principal do usuário.
+        await usersCollection.doc(currentUser.uid).delete();
+
+        // 2. Deletar usuário do Firebase Authentication
+        await currentUser.delete();
+      } catch (error: any) {
+        console.error("Erro ao deletar conta:", error);
+        // Requer autenticação recente para currentUser.delete()
+        // Se der erro de "requires-recent-login", o usuário precisa relogar.
+        if (error.code === 'auth/requires-recent-login') {
+          throw new Error('Esta operação requer login recente. Por favor, faça login novamente e tente excluir sua conta.');
+        }
+        throw new Error(`Não foi possível excluir a conta: ${error.message}`);
+      }
+    } else {
+      throw new Error('Nenhum usuário logado para deletar.');
+    }
+  },
 };
 
 // Serviços de Hábitos

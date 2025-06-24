@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../contexts/ThemeContext';
-import { authServices, userServices } from '../services/firebase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authServices, userServices, habitServices } from '../services/firebase'; // Adicionado habitServices
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Será removido para stats
 import NotificationService from '../services/NotificationService';
 
 interface ProfileScreenProps {
@@ -34,17 +34,31 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout }) => {
   }, []);
 
   const loadUserData = async () => {
+    setLoading(true);
     try {
-      const data = await userServices.getUserProfile(user.uid);
-      setUserData(data);
+      const firebaseUser = await userServices.getUserData(user.uid);
+      setUserData(firebaseUser); // firebaseUser já deve ter a estrutura correta ou ser null
       
-      // Calcular streak e hábitos completados
-      const userStreak = await AsyncStorage.getItem(`@streak_${user.uid}`);
-      if (userStreak) setStreak(parseInt(userStreak));
+      let totalCompletedHabitsToday = 0;
+      let maxStreakOverall = 0;
       
-      const habits = await userServices.getUserHabits(user.uid);
-      const completed = habits.filter((h: any) => h.completed).length;
-      setCompletedHabits(completed);
+      if (user.uid) {
+        const habits = await habitServices.getHabits(user.uid);
+        for (const habit of habits) {
+          if (!habit.id) continue;
+          const isCompletedToday = await habitServices.isHabitCompletedOnDate(user.uid, habit.id, new Date());
+          if (isCompletedToday) {
+            totalCompletedHabitsToday++;
+          }
+          const { currentStreak } = await habitServices.calculateStreak(user.uid, habit.id);
+          if (currentStreak > maxStreakOverall) {
+            maxStreakOverall = currentStreak;
+          }
+        }
+        setCompletedHabits(totalCompletedHabitsToday);
+        setStreak(maxStreakOverall); // Streak aqui será o maior streak atual entre os hábitos
+      }
+
     } catch (error) {
       console.error('Erro ao carregar dados do usuário:', error);
     } finally {

@@ -81,11 +81,13 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
     }
     
     // Solicitar permissões de notificação ao iniciar
-    // NotificationService.checkPermissions((permissions) => {
-    //   if (!permissions.alert) {
-    //     NotificationService.requestPermissions();
-    //   }
-    // });
+    const checkAndRequestPermissions = async () => {
+      const hasPermission = await NotificationService.checkPermission();
+      if (!hasPermission) {
+        await NotificationService.requestPermission();
+      }
+    };
+    checkAndRequestPermissions();
     
     // Configurar listener em tempo real
     const unsubscribe = habitServices.onHabitsSnapshot(userId, async (firebaseHabits) => {
@@ -301,18 +303,23 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
 
       await habitServices.updateHabit(userId, editingHabit.id!, updates);
       
-      // Atualizar notificação se mudou o horário
-      if (notificationsEnabled && reminderTime !== editingHabit.reminderTime) {
-        // Cancelar notificação antiga
-        // NotificationService.cancelHabitReminder(editingHabit.id!);
-        
-        // Agendar nova notificação
-        // NotificationService.scheduleHabitReminder(
-        //   editingHabit.id!,
-        //   updates.name,
-        //   updates.reminderTime,
-        //   updates.icon
-        // );
+      // Atualizar notificação se mudou o horário ou o estado de ativação das notificações
+      if (editingHabit?.id) { // Garantir que editingHabit e seu id existem
+        if (notificationsEnabled) {
+          // Cancela a anterior para garantir que não haja duplicatas ou horários antigos
+          NotificationService.cancelNotification(editingHabit.id);
+          // Agenda a nova com os dados atualizados
+          NotificationService.scheduleNotification({
+            id: editingHabit.id,
+            name: updates.name,
+            reminderTime: updates.reminderTime,
+            icon: updates.icon,
+            isActive: true, // Se notificationsEnabled é true, o hábito deve ser ativo para notificação
+          });
+        } else {
+          // Se as notificações foram desabilitadas para este hábito
+          NotificationService.cancelNotification(editingHabit.id);
+        }
       }
       
       Alert.alert('Sucesso! ✨', 'Hábito atualizado com sucesso!');
@@ -346,7 +353,7 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
               await habitServices.deleteHabit(userId, habitId);
               
               // Cancelar notificação se existir
-              // NotificationService.cancelHabitReminder(habitId);
+              NotificationService.cancelNotification(habitId);
               
               Alert.alert('Sucesso', 'Hábito deletado com sucesso!');
             } catch (error) {
