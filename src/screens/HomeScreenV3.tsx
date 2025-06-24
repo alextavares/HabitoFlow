@@ -313,9 +313,38 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
 
   const updateHabit = async () => {
     if (!newHabitName.trim() || !editingHabit) {
-      Alert.alert('Ops!', 'Digite um nome para o hábito');
+      Alert.alert('Ops!', 'Digite um nome para o hábito.');
       return;
     }
+
+    const numTargetDays = parseInt(targetDays);
+    if (isNaN(numTargetDays) || numTargetDays <= 0) {
+      Alert.alert('Ops!', 'A meta de dias deve ser um número positivo.');
+      return;
+    }
+
+    // Validação do Horário do Lembrete
+    if (reminderTime) { // Só validar se houver um horário preenchido
+        const timeParts = reminderTime.split(':');
+        if (timeParts.length !== 2) {
+            Alert.alert('Ops!', 'Formato do horário inválido. Use HH:MM.');
+            return;
+        }
+        const hours = parseInt(timeParts[0]);
+        const minutes = parseInt(timeParts[1]);
+        if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+            Alert.alert('Ops!', 'Horário inválido. Verifique as horas e minutos.');
+            return;
+        }
+    }
+
+    if (frequency === 'custom' && customDays.length === 0) {
+      Alert.alert('Ops!', 'Selecione pelo menos um dia para a frequência personalizada.');
+      return;
+    }
+
+    // A validação de customDays já está acima, não precisa duplicar.
+    // Apenas garantir que numTargetDays seja usado corretamente.
 
     try {
       setSaving(true);
@@ -420,8 +449,29 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
 
   const createHabit = async () => {
     if (!newHabitName.trim()) {
-      Alert.alert('Ops!', 'Digite um nome para o hábito');
+      Alert.alert('Ops!', 'Digite um nome para o hábito.');
       return;
+    }
+
+    const numTargetDays = parseInt(targetDays);
+    if (isNaN(numTargetDays) || numTargetDays <= 0) {
+      Alert.alert('Ops!', 'A meta de dias deve ser um número positivo.');
+      return;
+    }
+
+    // Validação do Horário do Lembrete
+    if (reminderTime) { // Só validar se houver um horário preenchido
+        const timeParts = reminderTime.split(':');
+        if (timeParts.length !== 2) {
+            Alert.alert('Ops!', 'Formato do horário inválido. Use HH:MM.');
+            return;
+        }
+        const hours = parseInt(timeParts[0]);
+        const minutes = parseInt(timeParts[1]);
+        if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+            Alert.alert('Ops!', 'Horário inválido. Verifique as horas e minutos.');
+            return;
+        }
     }
 
     try {
@@ -438,18 +488,15 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
         icon: selectedIcon,
         color: selectedColor,
         frequency: frequency, // Usar o estado da frequência
-        targetDays: parseInt(targetDays) || 30,
+        targetDays: numTargetDays, // Usar o valor já parseado e validado
         reminderTime: reminderTime,
       };
 
       if (frequency === 'custom') {
-        habitData.customDays = customDays.length > 0 ? customDays : [0,1,2,3,4,5,6]; // Salva todos os dias se nenhum for selecionado em custom
-      } else {
-        // Garantir que customDays não seja salvo se não for 'custom'
-        // Embora o Firestore possa ignorar campos undefined, é bom ser explícito
-        // Ou, alternativamente, pode-se querer limpar customDays no Firestore se a frequência mudar de custom para outra coisa.
-        // Por ora, apenas não o adicionamos.
+        habitData.customDays = customDays; // customDays já foi validado para não ser vazio
       }
+      // Não é preciso 'else' para customDays, pois se não for 'custom', o campo não é adicionado.
+      // Na atualização, o `null` já trata a remoção.
 
       const habitId = await habitServices.createHabit(userId, habitData);
       
