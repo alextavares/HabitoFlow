@@ -15,6 +15,7 @@ import {
   Modal,
   TextInput,
   ScrollView,
+  Vibration, // Importar Vibration
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SwipeListView } from 'react-native-swipe-list-view';
@@ -148,7 +149,7 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
         const maxStreakGlobal = Math.max(...habitsWithCompletion.map(h => h.maxStreak || 0), 0);
         setGlobalMaxStreak(maxStreakGlobal);
         
-        console.log('Hábitos atualizados em tempo real:', habitsWithCompletion);
+        // console.log('Hábitos atualizados em tempo real:', habitsWithCompletion); // Removido
         setHabits(habitsWithCompletion);
       } catch (error) {
         console.error('Erro ao processar hábitos:', error);
@@ -164,11 +165,17 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
 
   // Verifica se todos os hábitos estão completos
   useEffect(() => {
-    const allCompleted = habits.length > 0 && habits.every(h => h.completed);
-    if (allCompleted && !showConfetti) {
+    const todayDate = new Date();
+    // Filtrar primeiro os hábitos que estão ativos e agendados para hoje
+    const relevantHabits = habits.filter(habit => habit.isActive && isHabitScheduledForDate(habit, todayDate));
+
+    // Verificar se todos esses hábitos relevantes foram completados
+    const allRelevantTodayCompleted = relevantHabits.length > 0 && relevantHabits.every(h => h.completed);
+
+    if (allRelevantTodayCompleted && !showConfetti) {
       setShowConfetti(true);
     }
-  }, [habits]);
+  }, [habits, showConfetti]); // isHabitScheduledForDate é estável (importada)
 
   const toggleHabit = async (id: string) => {
     try {
@@ -233,17 +240,27 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
           }
 
           GamificationService.setUserId(userId);
+          // Para perfect_day, precisamos do número de hábitos agendados para hoje e quantos deles foram completados.
+          const todayDateForGamification = new Date();
+          const habitsScheduledTodayForGamification = habits.filter(h => h.isActive && isHabitScheduledForDate(h, todayDateForGamification));
+          const completedScheduledTodayForGamification = habitsScheduledTodayForGamification.filter(h => h.completed).length;
+
           GamificationService.checkAchievements({
             streak: updatedHabitInfo.streak,
             time: new Date(), // Hora da conclusão
-            // Para 'perfect_day', precisamos saber se TODOS os hábitos ativos foram completados
-            completedToday: completedTodayCount,
-            totalHabits: allCurrentHabits.filter(h => h.isActive).length
+            completedToday: completedScheduledTodayForGamification, // Corrigido
+            totalHabits: habitsScheduledTodayForGamification.length, // Corrigido (para o contexto de perfect_day)
+            // totalHabits (para conquistas de número de hábitos) ainda pode ser allCurrentHabits.length,
+            // o GamificationService precisaria distinguir ou receber ambos.
+            // Por ora, focamos em corrigir para perfect_day.
+            // Para outras conquistas como 'habit_collector', stats.totalHabits deve ser o total de hábitos criados.
+            // A chamada em createHabit já lida com isso.
           });
         }
       }
       // Se o hábito foi desmarcado, não há verificação de conquista de streak ou conclusão no momento.
       // A lógica para 'lostStreak' (comeback_kid) precisaria ser mais elaborada aqui.
+      Vibration.vibrate(50); // Vibração curta (50ms)
 
     } catch (error) {
       console.error('Erro ao alternar hábito:', error);
@@ -258,7 +275,7 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
   };
 
   const openAddModal = () => {
-    console.log('Abrindo modal de adicionar hábito');
+    // console.log('Abrindo modal de adicionar hábito'); // Removido
     setShowAddModal(true);
   };
 
@@ -355,13 +372,13 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
         return;
       }
 
-      const updates = {
+      const updates: any = { // Usar any para permitir customDays dinamicamente
         name: newHabitName.trim(),
         icon: selectedIcon,
         color: selectedColor,
-        targetDays: parseInt(targetDays) || 30,
+        targetDays: numTargetDays, // CORRIGIDO: Usar numTargetDays
         reminderTime: reminderTime,
-        frequency: frequency, // Adicionar frequência
+        frequency: frequency,
       };
 
       if (frequency === 'custom') {

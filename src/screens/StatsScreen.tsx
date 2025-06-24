@@ -53,12 +53,15 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ user }) => {
 
       let todayCompletedCount = 0;
       const processedHabitStats: HabitStats[] = [];
-      const allCompletedDatesForWeek: string[] = [];
+      let allTimeMaxStreakFound = 0; // Para rastrear o maior maxStreak entre todos os hábitos
 
       for (const habit of firebaseHabits) {
         if (!habit.id) continue;
 
-        const { currentStreak } = await habitServices.calculateStreak(userId, habit.id);
+        const { currentStreak, maxStreak: habitMaxStreak } = await habitServices.calculateStreak(userId, habit.id);
+        if (habitMaxStreak > allTimeMaxStreakFound) {
+          allTimeMaxStreakFound = habitMaxStreak;
+        }
 
         const startDate = new Date(habit.createdAt);
         const endDate = new Date();
@@ -75,14 +78,14 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ user }) => {
           }
         }
 
-        logs.filter(l => l.completed && l.date).forEach(l => {
-            // Garantir que l.date é uma string antes de adicionar
-            if (typeof l.date === 'string') {
-                 allCompletedDatesForWeek.push(l.date);
-            } else if (l.date instanceof Date) {
-                 allCompletedDatesForWeek.push(l.date.toISOString().split('T')[0]);
-            }
-        });
+        // logs.filter(l => l.completed && l.date).forEach(l => { // Removido
+        //     // Garantir que l.date é uma string antes de adicionar
+        //     if (typeof l.date === 'string') {
+        //          allCompletedDatesForWeek.push(l.date);
+        //     } else if (l.date instanceof Date) {
+        //          allCompletedDatesForWeek.push(l.date.toISOString().split('T')[0]);
+        //     }
+        // });
 
         const totalDaysSinceCreation = Math.floor((endDate.getTime() - new Date(habit.createdAt).getTime()) / (1000 * 60 * 60 * 24)) + 1;
         const percentage = totalDaysSinceCreation > 0 ? Math.round((completedDays / totalDaysSinceCreation) * 100) : 0;
@@ -132,8 +135,7 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ user }) => {
       }
       setWeeklyData(weekDataStats);
 
-      const maxIndividualStreak = Math.max(0, ...processedHabitStats.map(s => s.streak));
-      setOverallStreak(maxIndividualStreak);
+      setOverallStreak(allTimeMaxStreakFound); // Usar o maior maxStreak histórico encontrado
 
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
@@ -168,7 +170,7 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ user }) => {
         <View style={[styles.summaryCard, { backgroundColor: theme.colors.card }]}>
           <Icon name="fire" size={32} color="#FF6B6B" />
           <Text style={[styles.summaryValue, { color: theme.colors.text }]}>{overallStreak}</Text>
-          <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>Dias de Sequência</Text>
+          <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>Recorde Sequência</Text>
         </View>
         
         <View style={[styles.summaryCard, { backgroundColor: theme.colors.card }]}>

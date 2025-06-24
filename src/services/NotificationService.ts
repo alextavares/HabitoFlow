@@ -12,12 +12,15 @@ class NotificationService {
   configure = () => {
     PushNotification.configure({
       onRegister: function (token) {
-        console.log('TOKEN:', token);
+        // console.log('TOKEN:', token); // Removido
       },
 
       onNotification: function (notification) {
-        console.log('NOTIFICATION:', notification);
-        notification.finish('backgroundFetch');
+        // console.log('NOTIFICATION:', notification); // Removido
+        // É importante que as notificações recebidas sejam manipuladas adequadamente.
+        // Por exemplo, se o app está em primeiro plano, você pode querer mostrar um alerta customizado.
+        // Se a notificação tem ações, elas devem ser tratadas aqui.
+        notification.finish('backgroundFetch'); // Necessário para iOS.
       },
 
       permissions: {
@@ -40,7 +43,7 @@ class NotificationService {
         importance: Importance.HIGH,
         vibrate: true,
       },
-      (created) => console.log(`createChannel 'habit-reminders' returned '${created}'`)
+      // (created) => console.log(`createChannel 'habit-reminders' returned '${created}'`) // Removido
     );
 
     PushNotification.createChannel(
@@ -51,7 +54,7 @@ class NotificationService {
         importance: Importance.DEFAULT,
         vibrate: true,
       },
-      (created) => console.log(`createChannel 'achievements' returned '${created}'`)
+      // (created) => console.log(`createChannel 'achievements' returned '${created}'`) // Removido
     );
   };
 
@@ -64,13 +67,15 @@ class NotificationService {
         authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
       if (enabled) {
-        console.log('Authorization status:', authStatus);
+        // console.log('Authorization status:', authStatus); // Removido
         const token = await messaging().getToken();
-        await this.saveTokenToStorage(token);
+        await this.saveTokenToStorage(token); // Manter saveTokenToStorage por enquanto
         return token;
       }
+      return null; // Retornar null se não habilitado
     } catch (error) {
-      console.log('Permission request error:', error);
+      console.error('Permission request error:', error); // Mudar para console.error
+      return null; // Retornar null em caso de erro
     }
   };
 
@@ -79,7 +84,7 @@ class NotificationService {
     try {
       await AsyncStorage.setItem('@fcm_token', token);
     } catch (error) {
-      console.log('Error saving token:', error);
+      console.error('Error saving token:', error); // Mudar para console.error
     }
   };
 

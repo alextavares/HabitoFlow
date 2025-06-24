@@ -237,10 +237,17 @@ class GamificationService {
         );
       }
       
+      // Sincronizar pontos com Firestore
+      await userServices.updateGamificationData(this.userId, { points: newPoints });
+
       return newPoints;
     } catch (error) {
       console.error('Erro ao adicionar pontos:', error);
-      return 0;
+      // Se falhar ao adicionar pontos (ex: erro no AsyncStorage ou Firestore),
+      // retornar os pontos atuais pode ser mais seguro do que 0.
+      // No entanto, a lógica de erro pode precisar ser mais granular.
+      // Por agora, manter o retorno de 0 em caso de erro catastrófico.
+      return await this.getUserPoints(); // Retorna os pontos como estavam antes da tentativa de adicionar
     }
   }
 
@@ -389,8 +396,8 @@ class GamificationService {
     }
   }
 
-  getUserLevel(): UserLevel {
-    const points = this.getUserPoints();
+  async getUserLevel(): Promise<UserLevel> { // Tornar async e retornar Promise
+    const points = await this.getUserPoints(); // Usar await
     return this.getLevelForPoints(points);
   }
 

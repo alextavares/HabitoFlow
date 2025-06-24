@@ -12,7 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../contexts/ThemeContext';
 import { authServices, userServices, habitServices } from '../services/firebase'; // Adicionado habitServices
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Será removido para stats
+// import AsyncStorage from '@react-native-async-storage/async-storage'; // Removido
 import NotificationService from '../services/NotificationService';
 
 interface ProfileScreenProps {
@@ -50,13 +50,14 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout }) => {
           if (isCompletedToday) {
             totalCompletedHabitsToday++;
           }
-          const { currentStreak } = await habitServices.calculateStreak(user.uid, habit.id);
-          if (currentStreak > maxStreakOverall) {
-            maxStreakOverall = currentStreak;
+          // Usar currentStreak e maxStreak retornados por calculateStreak
+          const { currentStreak, maxStreak: habitMaxStreak } = await habitServices.calculateStreak(user.uid, habit.id);
+          if (habitMaxStreak > maxStreakOverall) { // Comparar com o maxStreak do hábito
+            maxStreakOverall = habitMaxStreak;
           }
         }
         setCompletedHabits(totalCompletedHabitsToday);
-        setStreak(maxStreakOverall); // Streak aqui será o maior streak atual entre os hábitos
+        setStreak(maxStreakOverall); // Agora reflete o maior maxStreak histórico
       }
 
     } catch (error) {

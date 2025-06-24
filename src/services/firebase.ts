@@ -656,48 +656,6 @@ export const habitServices = {
     }
   },
 
-  // Atualizar streak
-  async updateStreak(userId: string, habitId: string, completedDate: Date): Promise<void> {
-    try {
-      const streakRef = getUserStreaks(userId).doc(habitId);
-      const streakDoc = await streakRef.get();
-
-      if (!streakDoc.exists) {
-        // Criar novo streak
-        await streakRef.set({
-          habitId,
-          currentStreak: 1,
-          maxStreak: 1,
-          lastCompletedDate: timestamp() as any,
-        });
-      } else {
-        const streakData = streakDoc.data() as Streak;
-        const lastDate = streakData.lastCompletedDate.toDate();
-        const daysDiff = Math.floor((completedDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-
-        let newCurrentStreak = streakData.currentStreak;
-        
-        if (daysDiff === 1) {
-          // Dia consecutivo
-          newCurrentStreak += 1;
-        } else if (daysDiff > 1) {
-          // Quebrou o streak
-          newCurrentStreak = 1;
-        }
-
-        const newMaxStreak = Math.max(newCurrentStreak, streakData.maxStreak);
-
-        await streakRef.update({
-          currentStreak: newCurrentStreak,
-          maxStreak: newMaxStreak,
-          lastCompletedDate: timestamp() as any,
-        });
-      }
-    } catch (error: any) {
-      throw new Error(error.message);
-    }
-  },
-
   // Listener em tempo real para hábitos
   onHabitsSnapshot(userId: string, callback: (habits: Habit[]) => void) {
     return getUserHabits(userId)
