@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../contexts/ThemeContext';
-import { habitServices, authServices } from '../services/firebase'; // Corrigido
+import { habitServices, authServices, isHabitScheduledForDate, Habit } from '../services/firebase'; // Importado isHabitScheduledForDate e Habit
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
@@ -65,9 +65,14 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ user }) => {
         const logs = await habitServices.getHabitLogs(userId, habit.id, startDate, endDate);
 
         const completedDays = logs.filter(log => log.completed).length;
-        const isCompletedToday = await habitServices.isHabitCompletedOnDate(userId, habit.id, new Date());
-        if (isCompletedToday) {
-          todayCompletedCount++;
+
+        // Ajustar contagem de 'completedToday'
+        const todayDate = new Date();
+        if (isHabitScheduledForDate(habit as Habit, todayDate)) { // Cast para Habit para garantir que frequency e customDays estão acessíveis
+          const isMarkedCompletedToday = await habitServices.isHabitCompletedOnDate(userId, habit.id, todayDate);
+          if (isMarkedCompletedToday) {
+            todayCompletedCount++;
+          }
         }
 
         logs.filter(l => l.completed && l.date).forEach(l => {

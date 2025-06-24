@@ -21,7 +21,7 @@ import { SwipeListView } from 'react-native-swipe-list-view';
 import { useTheme, useThemedStyles } from '../contexts/ThemeContext';
 import ConfettiCelebration from '../components/ConfettiCelebration';
 import HabitCalendar from '../components/HabitCalendar';
-import { habitServices, authServices, Habit as FirebaseHabit } from '../services/firebase';
+import { habitServices, authServices, Habit as FirebaseHabit, isHabitScheduledForDate } from '../services/firebase'; // Importado isHabitScheduledForDate
 import NotificationService from '../services/NotificationService';
 
 const { width } = Dimensions.get('window');
@@ -70,6 +70,10 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Novos estados para frequência
+  const [frequency, setFrequency] = useState<'daily' | 'weekdays' | 'weekends' | 'custom'>('daily');
+  const [customDays, setCustomDays] = useState<number[]>([]); // 0: Dom, 1: Seg, ..., 6: Sab
 
   // Carregar hábitos do Firebase com sincronização em tempo real
   useEffect(() => {
@@ -266,6 +270,8 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
     setTargetDays('30');
     setReminderTime('09:00');
     setNotificationsEnabled(true);
+    setFrequency('daily');
+    setCustomDays([]);
   };
 
   const openCalendarModal = (habit: Habit) => {
@@ -286,7 +292,9 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
     setSelectedColor(habit.color);
     setTargetDays(habit.targetDays.toString());
     setReminderTime(habit.reminderTime);
-    setNotificationsEnabled(true);
+    setNotificationsEnabled(true); // Poderia ser melhorado para refletir o estado real da notificação do hábito
+    setFrequency(habit.frequency || 'daily');
+    setCustomDays(habit.customDays || []);
     setShowEditModal(true);
   };
 
@@ -299,6 +307,8 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
     setTargetDays('30');
     setReminderTime('09:00');
     setNotificationsEnabled(true);
+    setFrequency('daily');
+    setCustomDays([]);
   };
 
   const updateHabit = async () => {
@@ -322,7 +332,26 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
         color: selectedColor,
         targetDays: parseInt(targetDays) || 30,
         reminderTime: reminderTime,
+        frequency: frequency, // Adicionar frequência
       };
+
+      if (frequency === 'custom') {
+        updates.customDays = customDays.length > 0 ? customDays : [0,1,2,3,4,5,6];
+      } else {
+        // Se a frequência não é 'custom', queremos remover o campo customDays do Firestore.
+        // Para isso, podemos atribuir firestore.FieldValue.delete()
+        // Mas isso requer importar 'firestore' de '@react-native-firebase/firestore'
+        // Por simplicidade aqui, vamos passar undefined, e o serviço pode tratar.
+        // Ou, se o serviço de update apenas atualiza campos fornecidos, customDays não será tocado
+        // a menos que explicitamente passado. Para remover, seria melhor um tratamento específico.
+        // Vamos passar null para indicar que deve ser removido ou ignorado se a lógica do serviço for de merge.
+        // A melhor abordagem é usar FieldValue.delete() no serviço.
+        // Por ora, vamos apenas garantir que não seja passado se não for custom.
+        // Se o backend faz merge, precisamos explicitamente setar para null ou usar FieldValue.delete().
+        // Para este PR, vamos passar o campo `customDays` como `null` se não for custom,
+        // e o serviço `updateHabit` precisará interpretar isso.
+        updates.customDays = null; // Ou firestore.FieldValue.delete() se importado e usado no service
+      }
 
       await habitServices.updateHabit(userId, editingHabit.id!, updates);
       
@@ -404,14 +433,23 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
         return;
       }
 
-      const habitData = {
+      const habitData: any = { // Usar 'any' temporariamente ou definir um tipo mais específico para criação
         name: newHabitName.trim(),
         icon: selectedIcon,
         color: selectedColor,
-        frequency: 'daily' as const,
+        frequency: frequency, // Usar o estado da frequência
         targetDays: parseInt(targetDays) || 30,
         reminderTime: reminderTime,
       };
+
+      if (frequency === 'custom') {
+        habitData.customDays = customDays.length > 0 ? customDays : [0,1,2,3,4,5,6]; // Salva todos os dias se nenhum for selecionado em custom
+      } else {
+        // Garantir que customDays não seja salvo se não for 'custom'
+        // Embora o Firestore possa ignorar campos undefined, é bom ser explícito
+        // Ou, alternativamente, pode-se querer limpar customDays no Firestore se a frequência mudar de custom para outra coisa.
+        // Por ora, apenas não o adicionamos.
+      }
 
       const habitId = await habitServices.createHabit(userId, habitData);
       
@@ -521,8 +559,14 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
     );
   };
 
-  const completedCount = habits.filter(h => h.completed).length;
-  const completionRate = habits.length > 0 ? Math.round((completedCount / habits.length) * 100) : 0;
+  // Filtrar hábitos agendados para hoje
+  const today = new Date();
+  const habitsScheduledForToday = habits.filter(habit => isHabitScheduledForDate(habit, today));
+
+  const completedCount = habitsScheduledForToday.filter(h => h.completed).length;
+  const completionRate = habitsScheduledForToday.length > 0
+    ? Math.round((completedCount / habitsScheduledForToday.length) * 100)
+    : 0; // Se nenhum hábito agendado para hoje, taxa de conclusão é 0 ou 100 se não houver hábitos? (0 parece mais seguro)
 
   if (loading) {
     return (
@@ -720,6 +764,71 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
                   maxLength={3}
                 />
               </View>
+
+              {/* Seleção de Frequência */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Frequência</Text>
+                <View style={styles.frequencyOptionsContainer}>
+                  {(['daily', 'weekdays', 'weekends', 'custom'] as const).map((freqOpt) => (
+                    <TouchableOpacity
+                      key={freqOpt}
+                      style={[
+                        styles.frequencyButton,
+                        frequency === freqOpt && styles.frequencyButtonSelected,
+                      ]}
+                      onPress={() => setFrequency(freqOpt)}
+                    >
+                      <Text
+                        style={[
+                          styles.frequencyButtonText,
+                          frequency === freqOpt && styles.frequencyButtonTextSelected,
+                        ]}
+                      >
+                        {freqOpt === 'daily' && 'Diariamente'}
+                        {freqOpt === 'weekdays' && 'Dias de Semana'}
+                        {freqOpt === 'weekends' && 'Fins de Semana'}
+                        {freqOpt === 'custom' && 'Personalizado'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Seleção de Dias Personalizados (se frequency === 'custom') */}
+              {frequency === 'custom' && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Dias Personalizados</Text>
+                  <View style={styles.customDaysContainer}>
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dayName, index) => (
+                      <TouchableOpacity
+                        key={dayName}
+                        style={[
+                          styles.customDayButton,
+                          customDays.includes(index) && styles.customDayButtonSelected,
+                        ]}
+                        onPress={() => {
+                          const newCustomDays = [...customDays];
+                          if (newCustomDays.includes(index)) {
+                            setCustomDays(newCustomDays.filter((d) => d !== index).sort((a,b) => a-b));
+                          } else {
+                            newCustomDays.push(index);
+                            setCustomDays(newCustomDays.sort((a,b) => a-b));
+                          }
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.customDayButtonText,
+                            customDays.includes(index) && styles.customDayButtonTextSelected,
+                          ]}
+                        >
+                          {dayName}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
 
               {/* Horário do lembrete */}
               <View style={styles.inputGroup}>
@@ -1534,6 +1643,60 @@ const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
     color: '#FFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  // Estilos para seleção de frequência
+  frequencyOptionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 10,
+  },
+  frequencyButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: theme.glass,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  frequencyButtonSelected: {
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
+  },
+  frequencyButtonText: {
+    color: theme.text,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  frequencyButtonTextSelected: {
+    color: 'white',
+  },
+  customDaysContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 5, // Espaço pequeno entre os botões de dia
+  },
+  customDayButton: {
+    flex: 1, // Para que ocupem espaço igual
+    paddingVertical: 12,
+    paddingHorizontal: 5, // Menor padding horizontal para caberem
+    backgroundColor: theme.glass,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.border,
+    alignItems: 'center', // Centralizar texto
+  },
+  customDayButtonSelected: {
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
+  },
+  customDayButtonText: {
+    color: theme.text,
+    fontSize: 13, // Ligeiramente menor para caber "Qua"
+    fontWeight: '500',
+  },
+  customDayButtonTextSelected: {
+    color: 'white',
   },
 });
 
