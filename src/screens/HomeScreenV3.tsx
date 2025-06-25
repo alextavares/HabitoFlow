@@ -146,11 +146,21 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
           })
         );
         
+        // Verificar elegibilidade para Comeback Kid para cada hábito atualizado
+        if (userId) { // Garantir que userId está definido
+          for (const habitResult of habitsWithCompletion) {
+            const oldHabitState = habits.find(h => h.id === habitResult.id);
+            if (oldHabitState && oldHabitState.streak >= 3 && habitResult.streak < oldHabitState.streak) {
+              // console.log(`Comeback eligible for ${habitResult.name}: old ${oldHabitState.streak}, new ${habitResult.streak}`);
+              await AsyncStorage.setItem(`@comeback_eligible_${userId}_${habitResult.id}`, 'true');
+            }
+          }
+        }
+
         // Calcular o streak máximo global
         const maxStreakGlobal = Math.max(...habitsWithCompletion.map(h => h.maxStreak || 0), 0);
         setGlobalMaxStreak(maxStreakGlobal);
         
-        // console.log('Hábitos atualizados em tempo real:', habitsWithCompletion); // Removido
         setHabits(habitsWithCompletion);
       } catch (error) {
         console.error('Erro ao processar hábitos:', error);
