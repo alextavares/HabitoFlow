@@ -10,6 +10,10 @@ class NotificationService {
     this.createDefaultChannels();
   }
 
+  /**
+   * Configura o serviço de notificações PushNotification.
+   * Define handlers para registro, recebimento de notificações e permissões.
+   */
   configure = () => {
     PushNotification.configure({
       onRegister: function (token) {
@@ -35,6 +39,11 @@ class NotificationService {
     });
   };
 
+  /**
+   * Cria os canais de notificação padrão para o aplicativo (Android).
+   * Canal 'habit-reminders' para lembretes de hábitos.
+   * Canal 'achievements' para notificações de conquistas.
+   */
   createDefaultChannels = () => {
     PushNotification.createChannel(
       {
@@ -59,8 +68,12 @@ class NotificationService {
     );
   };
 
-  // Solicitar permissão para notificações
-  requestPermission = async () => {
+  /**
+   * Solicita permissão ao usuário para enviar notificações (usando Firebase Messaging).
+   * Salva o token FCM no AsyncStorage se a permissão for concedida.
+   * @returns Uma Promise com o token FCM se a permissão for concedida, caso contrário null.
+   */
+  requestPermission = async (): Promise<string | null> => {
     try {
       const authStatus = await messaging().requestPermission();
       const enabled =
@@ -80,8 +93,11 @@ class NotificationService {
     }
   };
 
-  // Salvar token FCM
-  saveTokenToStorage = async (token: string) => {
+  /**
+   * Salva o token FCM (Firebase Cloud Messaging) no AsyncStorage.
+   * @param token O token FCM a ser salvo.
+   */
+  saveTokenToStorage = async (token: string): Promise<void> => {
     try {
       await AsyncStorage.setItem('@fcm_token', token);
     } catch (error) {
@@ -89,8 +105,14 @@ class NotificationService {
     }
   };
 
-  // Agendar notificação local
-  scheduleNotification = (habit: Habit) => { // Tipo do parâmetro atualizado
+  /**
+   * Agenda uma notificação local para um hábito específico.
+   * Calcula a próxima data e hora válidas para o lembrete com base na frequência do hábito.
+   * A notificação é agendada como uma ocorrência única. O reagendamento deve ser
+   * tratado pela lógica da aplicação (ex: após completar um hábito ou na inicialização).
+   * @param habit O objeto do hábito para o qual agendar a notificação.
+   */
+  scheduleNotification = (habit: Habit): void => {
     if (!habit.reminderTime || !habit.isActive || !habit.id) {
       // console.log(`Notificação não agendada para ${habit.name} (sem reminderTime, inativo ou sem ID)`);
       return;
@@ -152,18 +174,27 @@ class NotificationService {
     }
   };
 
-  // Cancelar notificação
-  cancelNotification = (habitId: string) => {
+  /**
+   * Cancela uma notificação local agendada específica pelo seu ID.
+   * @param habitId O ID do hábito (usado como ID da notificação).
+   */
+  cancelNotification = (habitId: string): void => {
     PushNotification.cancelLocalNotification(habitId);
   };
 
-  // Cancelar todas as notificações
-  cancelAllNotifications = () => {
+  /**
+   * Cancela todas as notificações locais agendadas para o aplicativo.
+   */
+  cancelAllNotifications = (): void => {
     PushNotification.cancelAllLocalNotifications();
   };
 
-  // Notificação de conquista
-  showAchievementNotification = (title: string, message: string) => {
+  /**
+   * Exibe uma notificação local imediata para uma conquista desbloqueada.
+   * @param title Título da notificação.
+   * @param message Mensagem da notificação.
+   */
+  showAchievementNotification = (title: string, message: string): void => {
     PushNotification.localNotification({
       channelId: 'achievements',
       title: title,
@@ -175,8 +206,12 @@ class NotificationService {
     });
   };
 
-  // Verificar e agendar notificações para todos os hábitos
-  scheduleAllHabitNotifications = async (habits: any[]) => {
+  /**
+   * Cancela todas as notificações existentes e reagenda para todos os hábitos ativos fornecidos.
+   * Útil para uma sincronização geral de notificações, por exemplo, na inicialização do app.
+   * @param habits Array de objetos Habit para os quais as notificações devem ser agendadas.
+   */
+  scheduleAllHabitNotifications = async (habits: Habit[]): Promise<void> => { // Tipo do parâmetro atualizado
     // Cancelar todas as notificações existentes
     this.cancelAllNotifications();
 
@@ -188,8 +223,11 @@ class NotificationService {
     });
   };
 
-  // Notificação de streak
-  showStreakNotification = (streak: number) => {
+  /**
+   * Exibe uma notificação local imediata para celebrar um marco de streak.
+   * @param streak O número de dias do streak atual.
+   */
+  showStreakNotification = (streak: number): void => {
     let title = '🔥 Sequência Mantida!';
     let message = `Parabéns! Você está em uma sequência de ${streak} dias!`;
 
@@ -207,8 +245,11 @@ class NotificationService {
     this.showAchievementNotification(title, message);
   };
 
-  // Verificar se as notificações estão habilitadas
-  checkPermission = async () => {
+  /**
+   * Verifica se o aplicativo tem permissão para enviar notificações (usando Firebase Messaging).
+   * @returns Uma Promise com `true` se a permissão foi concedida, `false` caso contrário.
+   */
+  checkPermission = async (): Promise<boolean> => {
     const authStatus = await messaging().hasPermission();
     return (
       authStatus === messaging.AuthorizationStatus.AUTHORIZED ||

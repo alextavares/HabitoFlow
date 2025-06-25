@@ -167,11 +167,25 @@ const USER_LEVELS: UserLevel[] = [
 class GamificationService {
   private userId: string = '';
 
+  /**
+   * Define o ID do usuário para o qual o serviço de gamificação operará.
+   * Deve ser chamado antes de outras funções que dependem do userId.
+   * @param userId ID do usuário.
+   */
   setUserId(userId: string) {
     this.userId = userId;
   }
 
+  /**
+   * Busca as estatísticas de gamificação consolidadas para o usuário.
+   * Inclui pontos, conquistas, nível atual, próximo nível e progresso para o próximo nível.
+   * @returns Um objeto com as estatísticas de gamificação ou null em caso de erro.
+   */
   async getUserStats() {
+    if (!this.userId) {
+      console.error("GamificationService: userId não definido. Chame setUserId primeiro.");
+      return null;
+    }
     try {
       const [points, achievements, level] = await Promise.all([
         this.getUserPoints(),
@@ -192,7 +206,17 @@ class GamificationService {
     }
   }
 
+  /**
+   * Busca os pontos de gamificação do usuário.
+   * Prioriza a leitura do Firestore, com fallback para AsyncStorage.
+   * Sincroniza dados do AsyncStorage para o Firestore se este último não os possuir.
+   * @returns Uma Promise com o número de pontos do usuário.
+   */
   async getUserPoints(): Promise<number> {
+    if (!this.userId) {
+      console.error("GamificationService.getUserPoints: userId não definido.");
+      return 0;
+    }
     try {
       // 1. Tentar ler do Firestore
       const userData = await userServices.getUserData(this.userId);
@@ -220,7 +244,18 @@ class GamificationService {
     }
   }
 
+  /**
+   * Adiciona uma quantidade de pontos à pontuação do usuário.
+   * Atualiza os pontos no AsyncStorage e no Firestore.
+   * Verifica e notifica se o usuário subiu de nível.
+   * @param points Número de pontos a serem adicionados.
+   * @returns Uma Promise com a nova pontuação total do usuário, ou a pontuação anterior em caso de erro.
+   */
   async addPoints(points: number) {
+    if (!this.userId) {
+      console.error("GamificationService.addPoints: userId não definido.");
+      return await this.getUserPoints(); // Retorna os pontos atuais se não houver userId
+    }
     try {
       const currentPoints = await this.getUserPoints();
       const newPoints = currentPoints + points;
@@ -251,7 +286,18 @@ class GamificationService {
     }
   }
 
+  /**
+   * Busca o estado de todas as conquistas para o usuário.
+   * Prioriza a leitura do Firestore (IDs das desbloqueadas), com fallback para AsyncStorage (objetos completos).
+   * Sincroniza dados do AsyncStorage para o Firestore se este último não os possuir.
+   * Mescla o estado salvo com a lista mestre de conquistas (`ACHIEVEMENTS`).
+   * @returns Uma Promise com um array de todos os objetos Achievement, com seu estado `unlocked` atualizado.
+   */
   async getUserAchievements(): Promise<Achievement[]> {
+    if (!this.userId) {
+      console.error("GamificationService.getUserAchievements: userId não definido.");
+      return JSON.parse(JSON.stringify(ACHIEVEMENTS)); // Retorna a lista base
+    }
     let finalAchievements: Achievement[] = JSON.parse(JSON.stringify(ACHIEVEMENTS)); // Cópia profunda para evitar mutações no original
 
     try {
@@ -310,9 +356,21 @@ class GamificationService {
     }
   }
 
+  /**
+   * Verifica se alguma conquista foi desbloqueada com base nas estatísticas fornecidas.
+   * Se conquistas forem desbloqueadas, atualiza o estado (AsyncStorage e Firestore),
+   * adiciona pontos e envia uma notificação.
+   * @param stats Objeto contendo várias métricas de progresso do usuário.
+   *   - `streak`: Streak atual de um hábito específico.
+   *   - `totalHabits`: Número total de hábitos ativos (para `habit_collector`, etc.) OU número de hábitos agendados para hoje (para `perfect_day`).
+   *   - `completedToday`: Número de hábitos agendados para hoje que foram completados (para `perfect_day`).
+   *   - `time`: Hora da conclusão de um hábito (para `early_bird`, `night_owl`).
+   *   - `triggerComebackKid`: Booleano para acionar a conquista `comeback_kid`.
+   * @returns Uma Promise com um array das conquistas recém-desbloqueadas.
+   */
   async checkAchievements(stats: {
     streak?: number;
-    totalHabits?: number;
+    totalHabits?: number; // Pode ter duplo significado dependendo da conquista
     completedToday?: number;
     totalCompleted?: number;
     time?: Date;
@@ -412,11 +470,24 @@ class GamificationService {
     }
   }
 
-  async getUserLevel(): Promise<UserLevel> { // Tornar async e retornar Promise
-    const points = await this.getUserPoints(); // Usar await
+  /**
+   * Calcula e retorna o nível atual do usuário com base em seus pontos.
+   * @returns Uma Promise com o objeto UserLevel correspondente.
+   */
+  async getUserLevel(): Promise<UserLevel> {
+    if (!this.userId) {
+      console.error("GamificationService.getUserLevel: userId não definido.");
+      return this.getLevelForPoints(0); // Retorna nível para 0 pontos
+    }
+    const points = await this.getUserPoints();
     return this.getLevelForPoints(points);
   }
 
+  /**
+   * Determina o objeto UserLevel para uma dada quantidade de pontos.
+   * @param points A quantidade de pontos.
+   * @returns O objeto UserLevel.
+   */
   private getLevelForPoints(points: number): UserLevel {
     for (const level of USER_LEVELS) {
       if (points >= level.minPoints && points <= level.maxPoints) {
@@ -426,6 +497,11 @@ class GamificationService {
     return USER_LEVELS[0];
   }
 
+  /**
+   * Determina o próximo nível para o usuário com base nos pontos atuais.
+   * @param currentPoints Pontos atuais do usuário.
+   * @returns O objeto UserLevel do próximo nível, ou null se já estiver no nível máximo.
+   */
   private getNextLevel(currentPoints: number): UserLevel | null {
     const currentLevel = this.getLevelForPoints(currentPoints);
     if (currentLevel.level < USER_LEVELS.length) {
@@ -434,6 +510,11 @@ class GamificationService {
     return null;
   }
 
+  /**
+   * Calcula o progresso (0-100) do usuário dentro do seu nível atual.
+   * @param points Pontos atuais do usuário.
+   * @returns A porcentagem de progresso para o próximo nível.
+   */
   private getLevelProgress(points: number): number {
     const level = this.getLevelForPoints(points);
     const pointsInLevel = points - level.minPoints;
@@ -441,7 +522,15 @@ class GamificationService {
     return Math.min(100, (pointsInLevel / levelRange) * 100);
   }
 
+  /**
+   * Reseta o progresso de gamificação do usuário (pontos e conquistas) no AsyncStorage.
+   * ATENÇÃO: Não reseta os dados no Firestore. Usar com cautela, principalmente para debug.
+   */
   async resetProgress() {
+    if (!this.userId) {
+      console.error("GamificationService.resetProgress: userId não definido.");
+      return;
+    }
     try {
       await AsyncStorage.multiRemove([
         `@points_${this.userId}`,

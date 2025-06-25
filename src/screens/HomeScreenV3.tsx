@@ -77,7 +77,15 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
   const [frequency, setFrequency] = useState<'daily' | 'weekdays' | 'weekends' | 'custom'>('daily');
   const [customDays, setCustomDays] = useState<number[]>([]); // 0: Dom, 1: Seg, ..., 6: Sab
 
-  // Carregar hábitos do Firebase com sincronização em tempo real
+  /**
+   * Efeito principal para:
+   * 1. Solicitar permissões de notificação na montagem.
+   * 2. Configurar um listener em tempo real para os hábitos do usuário no Firestore.
+   *    - Transforma os dados brutos do Firebase, calculando `isCompletedToday`, `currentStreak`, `maxStreak`, e `completedDays`.
+   *    - Verifica a elegibilidade para a conquista 'comeback_kid' se um streak significativo for quebrado.
+   *    - Atualiza o estado `habits` e `globalMaxStreak`.
+   * 3. Retorna uma função de cleanup para desinscrever do listener do Firestore.
+   */
   useEffect(() => {
     const userId = authServices.getCurrentUser();
     
@@ -174,7 +182,10 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
     return () => unsubscribe();
   }, [user]);
 
-  // Verifica se todos os hábitos estão completos
+  /**
+   * Efeito para disparar a animação de confetti quando todos os hábitos
+   * ativos e agendados para o dia atual forem completados.
+   */
   useEffect(() => {
     const todayDate = new Date();
     // Filtrar primeiro os hábitos que estão ativos e agendados para hoje

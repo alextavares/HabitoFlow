@@ -9,98 +9,97 @@ Um aplicativo moderno para rastreamento de hábitos com design glassmorphism, da
 - Android Studio com emulador configurado
 - React Native CLI
 
-### ⚠️ Instalação de Dependências Pendentes
-
-Devido a problemas temporários com npm, você precisa instalar manualmente alguns pacotes:
-
-```bash
-# Limpe o cache do npm primeiro
-npm cache clean --force
-
-# Instale os pacotes necessários
-npm install react-native-linear-gradient
-npm install @react-native-async-storage/async-storage
-npm install react-native-canvas
-```
-
-## 🔥 Firebase já está Configurado!
-
-O Firebase já está integrado com:
-- ✅ Autenticação (Email/Senha)
-- ✅ Firestore Database
-- ✅ google-services.json configurado
+## 🔥 Firebase Integrado
+- ✅ Autenticação (Email/Senha, Google Sign-In)
+- ✅ Firestore Database para persistência de dados do usuário, hábitos, logs, pontos e conquistas.
+- ✅ `google-services.json` (Android) e `GoogleService-Info.plist` (iOS) devem ser configurados.
 
 ## 📱 Funcionalidades Implementadas
 
-1. **Tela de Login/Cadastro com Firebase**
-   - Login com email/senha
-   - Cadastro de novos usuários
-   - Recuperação de senha
-   - Mensagens de erro em português
+1.  **Autenticação Completa:**
+    *   Login e Cadastro com Email/Senha.
+    *   Login com Google.
+    *   Recuperação de senha.
+    *   Exclusão de conta.
 
-2. **Tela Principal (Home)**
-   - Lista de hábitos com progresso
-   - Dark mode funcional
-   - Animações de confetti
-   - Logout integrado
+2.  **Gerenciamento de Hábitos (`HomeScreenV3`):**
+    *   CRUD completo: Criar, Listar, Editar, Deletar (soft delete) hábitos.
+    *   Marcar/Desmarcar conclusão de hábitos.
+    *   Cálculo de Streak atual e máximo, sensível à frequência do hábito.
+    *   Seleção de Ícone, Cor, Nome, Meta de dias.
+    *   **Configuração de Frequência:** Diariamente, Dias de Semana, Fins de Semana, Personalizado (seleção de dias específicos).
+    *   Definição de Horário para Lembretes.
+    *   Feedback tátil ao interagir com hábitos.
 
-3. **Tela de Adicionar Hábito**
-   - Seleção de emoji e cor
-   - Preview em tempo real
-   - Configuração de frequência
+3.  **Interface Principal:**
+    *   Lista de hábitos com visualização de progresso e streak.
+    *   Header com saudação, data e estatísticas rápidas (completados hoje, recorde de sequência global).
+    *   Modo Claro/Escuro funcional e persistente.
+    *   Animação de Confetti ao completar todos os hábitos agendados para o dia.
+    *   Navegação por Abas (Bottom Tab Navigator).
 
-4. **Design System**
-   - Glassmorphism
-   - Gradientes modernos
-   - Micro-animações
-   - Tema claro/escuro
+4.  **Notificações Inteligentes:**
+    *   Lembretes locais agendados para a próxima ocorrência válida do hábito, respeitando sua frequência e horário.
+    *   Notificações para desbloqueio de Conquistas e subida de Nível.
+
+5.  **Estatísticas (`StatsScreen`):**
+    *   Visualização do Recorde de Sequência (maior streak máximo entre todos os hábitos).
+    *   Total de hábitos criados.
+    *   Número de hábitos completados no dia atual (considerando os agendados).
+    *   Gráfico de desempenho dos últimos 7 dias (hábitos completados por dia).
+    *   Lista de desempenho individual por hábito (streak atual, % de conclusão desde a criação).
+
+6.  **Gamificação (`AchievementsScreen` e Serviços):**
+    *   Sistema de Pontos e Níveis de Usuário.
+    *   Lista de Conquistas predefinidas (baseadas em streaks, número de hábitos, dias perfeitos, etc.).
+    *   Desbloqueio automático de conquistas com base nas ações do usuário.
+    *   Persistência de pontos e conquistas desbloqueadas no Firestore.
+    *   Conquistas implementadas incluem: "Primeiro Passo", "Guerreiro da Semana", "Mestre do Mês", "Lenda Centenária", "Iniciante", "Colecionador", "Mestre dos Hábitos", "Dia Perfeito", "Semana Perfeita", "Madrugador", "Coruja Noturna", "Retorno Triunfante".
+
+7.  **Perfil do Usuário (`ProfileScreen`):**
+    *   Visualização de dados do usuário (nome, email, avatar placeholder).
+    *   Estatísticas rápidas (Recorde de Sequência, Hábitos Completados Hoje).
+    *   Opção de Logout.
+    *   Opção de Excluir Conta (remove dados do Auth e Firestore).
+    *   Controle de Tema (Claro/Escuro).
+    *   Opção para habilitar/desabilitar notificações (redireciona para configurações do dispositivo para desabilitar).
 
 ## 🏃 Executando o App
+
+### Configuração Adicional (iOS)
+(Para iOS) Rode `cd ios && bundle install && bundle exec pod install && cd ..` após `npm install`.
 
 ### 1. Inicie o Metro bundler:
 ```bash
 npm start
 ```
 
-### 2. Em outro terminal, execute o app Android:
-```bash
-npm run android
-```
+### 2. Em outro terminal, execute o app:
+   - Android: `npm run android`
+   - iOS: `npm run ios`
 
-## 🎨 Arquitetura do Projeto
 
+## 🎨 Arquitetura Simplificada do Projeto
 ```
 src/
-├── screens/
-│   ├── LoginScreenFirebase.tsx    # Tela de login
-│   ├── HomeScreenV3.tsx           # Tela principal
-│   └── AddHabitScreen.tsx         # Tela de adicionar hábito
-├── services/
-│   └── firebase.ts                # Serviços Firebase
-├── contexts/
-│   └── ThemeContext.tsx           # Contexto de tema
-├── components/
-│   └── ConfettiCelebration.tsx    # Animação de confetti
-└── mocks/                         # Mocks temporários
+├── components/          # Componentes reutilizáveis (Checkbox, Confetti, Calendário)
+├── contexts/            # Contextos da aplicação (ex: ThemeContext)
+├── navigation/          # Configuração da navegação (AppNavigator)
+├── screens/             # Telas da aplicação (HomeScreenV3, LoginScreenFirebase, StatsScreen, etc.)
+├── services/            # Lógica de negócios e comunicação com backend/APIs
+│   ├── firebase.ts      # Configuração do Firebase, Auth, Habit e User services.
+│   ├── GamificationService.ts # Lógica de pontos, níveis e conquistas.
+│   └── NotificationService.ts # Gerenciamento de notificações locais.
+└── App.tsx              # Componente raiz da aplicação
 ```
 
-## ⚠️ Importante sobre os Mocks
-
-Os arquivos em `src/mocks/` são temporários! Após instalar os pacotes reais:
-1. Delete a pasta `src/mocks/`
-2. Remova os comentários `@ts-ignore` dos imports
-3. Substitua os imports dos mocks pelos pacotes reais:
-   - `../mocks/react-native-linear-gradient` → `react-native-linear-gradient`
-   - `../mocks/async-storage` → `@react-native-async-storage/async-storage`
-
-## 🔄 Próximos Passos
-
-1. **Instalar pacotes pendentes** (veja MISSING_PACKAGES.md)
-2. **Testar autenticação** - Crie uma conta e faça login
-3. **Implementar CRUD de hábitos** - Conectar com Firestore
-4. **Adicionar navegação** - React Navigation entre telas
-5. **Notificações push** - Lembretes de hábitos
-6. **Monetização** - Implementar funcionalidades premium
+## 🚧 Pendências Conhecidas / Melhorias Futuras
+-   **Cálculo de Streak para `comeback_kid`:** A detecção de "streak perdido significativo" para a conquista `comeback_kid` precisa de refinamento para cobrir todos os cenários de quebra (especialmente por inatividade prolongada que não passa pelo `toggleHabit`).
+-   **Agendamento de Notificações Recorrentes:** O sistema atual agenda a *próxima* ocorrência. Para notificações que se repetem confiavelmente de acordo com a frequência (ex: um hábito de "Dias de Semana" que notifica toda Seg, Ter, Qua, Qui, Sex sem intervenção manual a cada vez), seria necessário um sistema de agendamento em background mais robusto ou múltiplas notificações agendadas.
+-   **Testes Unitários e de Integração:** Adicionar uma suíte de testes para garantir a estabilidade das lógicas complexas (streaks, gamificação, notificações).
+-   **Monetização:** Funcionalidades premium e lógica de compra/subscrição.
+-   **UI/UX:** Melhorias contínuas, como seletor de horário nativo, feedback visual mais rico, etc.
+-   **Internacionalização (i18n).**
 
 ## 💡 Dicas de Desenvolvimento
 

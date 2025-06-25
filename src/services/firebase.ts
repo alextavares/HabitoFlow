@@ -77,7 +77,14 @@ export const serverTimestamp = firestore.Timestamp;
 
 // Serviços de Autenticação
 export const authServices = {
-  // Criar conta
+  /**
+   * Registra um novo usuário com email, senha e nome.
+   * Cria um documento de usuário correspondente no Firestore.
+   * @param email Email do usuário.
+   * @param password Senha do usuário.
+   * @param name Nome do usuário.
+   * @returns Uma Promise com os dados do usuário criado.
+   */
   async signUp(email: string, password: string, name: string): Promise<User> {
     try {
       const { user } = await authService.createUserWithEmailAndPassword(email, password);
@@ -105,7 +112,12 @@ export const authServices = {
     }
   },
 
-  // Login
+  /**
+   * Autentica um usuário existente com email e senha.
+   * @param email Email do usuário.
+   * @param password Senha do usuário.
+   * @returns Uma Promise com os dados do usuário autenticado.
+   */
   async signIn(email: string, password: string): Promise<User> {
     try {
       const { user } = await authService.signInWithEmailAndPassword(email, password);
@@ -121,7 +133,9 @@ export const authServices = {
     }
   },
 
-  // Logout
+  /**
+   * Desconecta o usuário atualmente autenticado.
+   */
   async signOut(): Promise<void> {
     try {
       await authService.signOut();
@@ -130,7 +144,10 @@ export const authServices = {
     }
   },
 
-  // Recuperar senha
+  /**
+   * Envia um email de redefinição de senha para o endereço fornecido.
+   * @param email Email para o qual enviar o link de redefinição.
+   */
   async resetPassword(email: string): Promise<void> {
     try {
       await authService.sendPasswordResetEmail(email);
@@ -139,12 +156,19 @@ export const authServices = {
     }
   },
 
-  // Obter usuário atual
+  /**
+   * Retorna o UID do usuário atualmente autenticado, ou null se não houver usuário.
+   * @returns O UID do usuário ou null.
+   */
   getCurrentUser(): string | null {
     return authService.currentUser?.uid || null;
   },
 
-  // Google Sign-In
+  /**
+   * Autentica um usuário usando o Google Sign-In.
+   * Cria um novo documento de usuário no Firestore se for o primeiro login.
+   * @returns Uma Promise com os dados do usuário autenticado.
+   */
   async signInWithGoogle(): Promise<User> {
     try {
       // Check if your device supports Google Play
@@ -193,12 +217,20 @@ export const authServices = {
     }
   },
 
-  // Listener de autenticação
+  /**
+   * Registra um listener para mudanças no estado de autenticação do usuário.
+   * @param callback Função a ser chamada quando o estado de autenticação mudar.
+   * @returns Uma função para cancelar a inscrição do listener.
+   */
   onAuthStateChanged(callback: (user: any) => void) {
     return authService.onAuthStateChanged(callback);
   },
 
-  // Deletar conta do usuário
+  /**
+   * Deleta a conta do usuário atualmente autenticado do Firebase Authentication
+   * e seu documento correspondente no Firestore.
+   * Requer reautenticação recente para operações sensíveis.
+   */
   async deleteAccount(): Promise<void> {
     const currentUser = authService.currentUser;
     if (currentUser) {
@@ -225,7 +257,11 @@ export const authServices = {
     }
   },
 
-  // Atualizar dados de gamificação do usuário
+  /**
+   * Atualiza os dados de gamificação (pontos e conquistas desbloqueadas) de um usuário no Firestore.
+   * @param userId ID do usuário.
+   * @param gamificationData Objeto contendo `points` e/ou `unlockedAchievements` para atualizar.
+   */
   async updateGamificationData(userId: string, gamificationData: { points?: number; unlockedAchievements?: any[] }): Promise<void> {
     try {
       const updateData: { [key: string]: any } = {};
@@ -249,7 +285,12 @@ export const authServices = {
 
 // Serviços de Hábitos
 export const habitServices = {
-  // Criar hábito
+  /**
+   * Cria um novo hábito para um usuário no Firestore.
+   * @param userId ID do usuário.
+   * @param habit Objeto contendo os dados do hábito (sem id e createdAt, que são gerados).
+   * @returns Uma Promise com o ID do hábito criado.
+   */
   async createHabit(userId: string, habit: Omit<Habit, 'id' | 'createdAt'>): Promise<string> {
     try {
       const habitData = {
@@ -265,7 +306,12 @@ export const habitServices = {
     }
   },
 
-  // Obter hábitos
+  /**
+   * Busca todos os hábitos ativos de um usuário.
+   * Os hábitos são ordenados pela data de criação (mais recentes primeiro) no lado do cliente.
+   * @param userId ID do usuário.
+   * @returns Uma Promise com um array de objetos Habit.
+   */
   async getHabits(userId: string): Promise<Habit[]> {
     try {
       // Temporariamente sem orderBy para evitar índice
@@ -289,7 +335,13 @@ export const habitServices = {
     }
   },
 
-  // Atualizar hábito
+  /**
+   * Atualiza um hábito existente de um usuário.
+   * Lida com a remoção do campo `customDays` se ele for passado como `null`.
+   * @param userId ID do usuário.
+   * @param habitId ID do hábito a ser atualizado.
+   * @param updates Objeto contendo os campos do hábito a serem atualizados. `customDays` pode ser `null` para deletar o campo.
+   */
   async updateHabit(userId: string, habitId: string, updates: Partial<Habit> & { customDays?: number[] | null }): Promise<void> {
     try {
       const updateData = { ...updates };
@@ -302,7 +354,11 @@ export const habitServices = {
     }
   },
 
-  // Deletar hábito (soft delete)
+  /**
+   * Realiza um soft delete em um hábito, marcando-o como inativo.
+   * @param userId ID do usuário.
+   * @param habitId ID do hábito a ser deletado.
+   */
   async deleteHabit(userId: string, habitId: string): Promise<void> {
     try {
       await getUserHabits(userId).doc(habitId).update({
@@ -313,7 +369,13 @@ export const habitServices = {
     }
   },
 
-  // Marcar hábito como feito
+  /**
+   * Registra ou atualiza o log de conclusão de um hábito para uma data específica.
+   * @param userId ID do usuário.
+   * @param habitId ID do hábito.
+   * @param date Data para a qual registrar a conclusão.
+   * @param completed Booleano indicando se o hábito foi completado.
+   */
   async toggleHabitCompletion(
     userId: string, 
     habitId: string, 
@@ -330,17 +392,22 @@ export const habitServices = {
         timestamp: timestamp() as any, // Adicionar timestamp para ordenação
       });
 
-      // TODO: Implementar updateStreak depois
-      // if (completed) {
-      //   await this.updateStreak(userId, habitId, date);
-      // }
+      // A lógica de streak agora é calculada dinamicamente por calculateStreak.
+      // A função updateStreak foi removida.
     } catch (error: any) {
       console.error('Erro ao salvar completion:', error);
       throw new Error(error.message);
     }
   },
 
-  // Obter logs de um hábito
+  /**
+   * Busca os logs de conclusão de um hábito dentro de um intervalo de datas.
+   * @param userId ID do usuário.
+   * @param habitId ID do hábito.
+   * @param startDate Data de início do intervalo.
+   * @param endDate Data de fim do intervalo.
+   * @returns Uma Promise com um array de objetos HabitLog.
+   */
   async getHabitLogs(userId: string, habitId: string, startDate: Date, endDate: Date): Promise<HabitLog[]> {
     try {
       // Converter datas para strings YYYY-MM-DD
@@ -362,7 +429,13 @@ export const habitServices = {
     }
   },
 
-  // Verificar se hábito foi completado em uma data específica
+  /**
+   * Verifica se um hábito específico foi marcado como completo em uma data específica.
+   * @param userId ID do usuário.
+   * @param habitId ID do hábito.
+   * @param date Data a ser verificada.
+   * @returns Uma Promise com `true` se o hábito foi completado na data, `false` caso contrário.
+   */
   async isHabitCompletedOnDate(userId: string, habitId: string, date: Date): Promise<boolean> {
     try {
       const dateStr = date.toISOString().split('T')[0];
@@ -379,7 +452,13 @@ export const habitServices = {
     }
   },
 
-  // Calcular streak atual
+  /**
+   * Calcula o streak atual e o streak máximo para um hábito específico,
+   * considerando a frequência definida (diário, dias de semana, fins de semana, personalizado).
+   * @param userId ID do usuário.
+   * @param habitId ID do hábito.
+   * @returns Um objeto com { currentStreak, maxStreak }.
+   */
   async calculateStreak(userId: string, habitId: string): Promise<{ currentStreak: number; maxStreak: number }> {
     try {
       // 1. Buscar dados do hábito (para frequência)
@@ -581,10 +660,12 @@ export const habitServices = {
         }
         maxStreak = Math.max(maxStreak, currentSequenceStreak);
       }
-      // maxStreak = Math.max(maxStreak, currentSequenceStreak); // Final check
+      // Após o loop, certificar-se de que o último currentSequenceStreak foi considerado para o maxStreak.
+      // A linha `maxStreak = Math.max(maxStreak, currentSequenceStreak);` dentro do loop já faz isso a cada iteração.
 
       // --- Calcular Current Streak ---
-      // Iterar do mais recente (completedDates[0]) para trás
+      // O currentStreak é calculado retroativamente a partir de "hoje".
+      // Ele conta quantos dias de obrigação consecutivos, até "hoje" (ou o último dia de obrigação antes de hoje), foram cumpridos.
       currentStreak = 0;
       let expectedCurrentDate = new Date(); // "Hoje"
       expectedCurrentDate.setHours(0, 0, 0, 0); // Normalizar para início do dia
@@ -656,7 +737,13 @@ export const habitServices = {
     }
   },
 
-  // Listener em tempo real para hábitos
+  /**
+   * Registra um listener em tempo real para os hábitos ativos de um usuário.
+   * Os hábitos são ordenados pela data de criação (mais recentes primeiro) no lado do cliente.
+   * @param userId ID do usuário.
+   * @param callback Função a ser chamada com a lista de hábitos sempre que houver uma atualização.
+   * @returns Uma função para cancelar a inscrição do listener.
+   */
   onHabitsSnapshot(userId: string, callback: (habits: Habit[]) => void) {
     return getUserHabits(userId)
       .where('isActive', '==', true)
@@ -712,7 +799,12 @@ export const habitServices = {
   },
 };
 
-// Helper para verificar se o hábito está agendado para um dia específico
+/**
+ * Verifica se um hábito está agendado para uma data específica, com base na sua frequência.
+ * @param habit O objeto do hábito, incluindo `frequency` e `customDays`.
+ * @param date A data a ser verificada.
+ * @returns `true` se o hábito está agendado para a data, `false` caso contrário.
+ */
 export const isHabitScheduledForDate = (habit: Habit, date: Date): boolean => {
   const dayOfWeek = date.getDay(); // 0 (Dom) a 6 (Sáb)
   switch (habit.frequency) {
@@ -733,7 +825,11 @@ export const isHabitScheduledForDate = (habit: Habit, date: Date): boolean => {
 
 // Serviços de Usuário
 export const userServices = {
-  // Obter dados do usuário
+  /**
+   * Busca os dados de perfil de um usuário do Firestore.
+   * @param userId ID do usuário.
+   * @returns Uma Promise com o objeto User, ou null se o usuário não for encontrado.
+   */
   async getUserData(userId: string): Promise<User | null> {
     try {
       const doc = await usersCollection.doc(userId).get();
@@ -748,7 +844,11 @@ export const userServices = {
     }
   },
 
-  // Atualizar configurações
+  /**
+   * Atualiza as configurações de um usuário no Firestore.
+   * @param userId ID do usuário.
+   * @param settings Objeto parcial contendo as configurações a serem atualizadas.
+   */
   async updateSettings(userId: string, settings: Partial<User['settings']>): Promise<void> {
     try {
       await usersCollection.doc(userId).update({
@@ -759,7 +859,10 @@ export const userServices = {
     }
   },
 
-  // Atualizar para premium
+  /**
+   * Marca um usuário como premium no Firestore.
+   * @param userId ID do usuário a ser atualizado para premium.
+   */
   async upgradeToPremium(userId: string): Promise<void> {
     try {
       await usersCollection.doc(userId).update({
