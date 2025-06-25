@@ -165,6 +165,19 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
           }
         }
 
+        // Verificar elegibilidade para Comeback Kid para cada hábito atualizado ANTES de atualizar o estado 'habits'
+        if (userId) {
+          for (const processedHabit of habitsWithCompletion) {
+            if (processedHabit.id) { // Garantir que o hábito processado tem um ID
+              const previousHabitState = habits.find(h => h.id === processedHabit.id);
+              if (previousHabitState && previousHabitState.streak >= 3 && processedHabit.streak < previousHabitState.streak) {
+                // console.log(`Comeback eligible by useEffect for ${processedHabit.name}: old ${previousHabitState.streak}, new ${processedHabit.streak}`);
+                await AsyncStorage.setItem(`@comeback_eligible_${userId}_${processedHabit.id}`, 'true');
+              }
+            }
+          }
+        }
+
         // Calcular o streak máximo global
         const maxStreakGlobal = Math.max(...habitsWithCompletion.map(h => h.maxStreak || 0), 0);
         setGlobalMaxStreak(maxStreakGlobal);
