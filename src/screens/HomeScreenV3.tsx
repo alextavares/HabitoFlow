@@ -17,6 +17,7 @@ import {
   ScrollView,
   Vibration, // Importar Vibration
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
 import LinearGradient from 'react-native-linear-gradient';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { useTheme, useThemedStyles } from '../contexts/ThemeContext';
@@ -259,8 +260,78 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
         }
       }
       // Se o hábito foi desmarcado, não há verificação de conquista de streak ou conclusão no momento.
-      // A lógica para 'lostStreak' (comeback_kid) precisaria ser mais elaborada aqui.
-      Vibration.vibrate(50); // Vibração curta (50ms)
+      // Lógica para Comeback Kid
+      const streakBeforeToggle = habit.streak; // Streak ANTES de qualquer alteração de log ou recálculo
+
+      // Se marcou como concluído, recalcular o streak e verificar conquistas
+      if (newCompletionState) {
+        const { currentStreak: newCalculatedStreak, maxStreak: newMaxStreak } = await habitServices.calculateStreak(userId, id);
+
+        // Atualizar o estado do hábito com o novo streak
+        setHabits(prevHabits => prevHabits.map(h =>
+            h.id === id ? { ...h, streak: newCalculatedStreak, maxStreak: newMaxStreak, completed: newCompletionState } : h
+        ));
+
+        const newGlobalMaxStreak = Math.max(newMaxStreak, globalMaxStreak);
+        if (newGlobalMaxStreak > globalMaxStreak) {
+          setGlobalMaxStreak(newGlobalMaxStreak);
+        }
+
+        // Preparar stats para GamificationService
+        const gamificationStats: any = { time: new Date() };
+        gamificationStats.streak = newCalculatedStreak;
+
+        const todayDateForGamification = new Date();
+        const allCurrentHabits = habits; // Usar o estado 'habits' que já está sincronizado pelo listener
+        const habitsScheduledTodayForGamification = allCurrentHabits.filter(h => h.isActive && isHabitScheduledForDate(h, todayDateForGamification));
+        const completedScheduledTodayForGamification = habitsScheduledTodayForGamification.filter(h => h.completed || (h.id === id)).length; // Considerar o hábito atual como completo
+
+        gamificationStats.completedToday = completedScheduledTodayForGamification;
+        gamificationStats.totalHabits = habitsScheduledTodayForGamification.length;
+
+        // Lógica específica para Comeback Kid ao completar
+        if (newCalculatedStreak === 1) {
+          const comebackEligible = await AsyncStorage.getItem(`@comeback_eligible_${userId}_${id}`);
+          if (comebackEligible === 'true') {
+            gamificationStats.triggerComebackKid = true;
+            await AsyncStorage.removeItem(`@comeback_eligible_${userId}_${id}`);
+          }
+        }
+
+        GamificationService.setUserId(userId);
+        GamificationService.checkAchievements(gamificationStats);
+
+        // Reagendar notificação para a próxima ocorrência válida
+        if (habit.id && habit.reminderTime && notificationsEnabled) {
+            NotificationService.cancelNotification(habit.id);
+            const habitDetailsForNotification = allCurrentHabits.find(h => h.id === id);
+            if(habitDetailsForNotification) {
+                 NotificationService.scheduleNotification(habitDetailsForNotification);
+            }
+        }
+
+      } else { // Hábito foi DESMARCADO
+        // Recalcular o streak ao desmarcar também
+        const { currentStreak: newCalculatedStreak, maxStreak: newMaxStreak } = await habitServices.calculateStreak(userId, id);
+        setHabits(prevHabits => prevHabits.map(h =>
+            h.id === id ? { ...h, streak: newCalculatedStreak, maxStreak: newMaxStreak, completed: newCompletionState } : h
+        ));
+
+        // Verificar se um streak significativo foi perdido ao DESMARCAR
+        if (streakBeforeToggle >= 3 && newCalculatedStreak < streakBeforeToggle) {
+          await AsyncStorage.setItem(`@comeback_eligible_${userId}_${id}`, 'true');
+        }
+
+        // Reagendar notificação
+        if (habit.id && habit.reminderTime && notificationsEnabled) {
+          NotificationService.cancelNotification(habit.id);
+          const habitDetailsForNotification = habits.find(h => h.id === id);
+          if(habitDetailsForNotification) {
+               NotificationService.scheduleNotification(habitDetailsForNotification);
+          }
+        }
+      }
+      Vibration.vibrate(50);
 
     } catch (error) {
       console.error('Erro ao alternar hábito:', error);

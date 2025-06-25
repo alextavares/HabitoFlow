@@ -316,7 +316,8 @@ class GamificationService {
     completedToday?: number;
     totalCompleted?: number;
     time?: Date;
-    lostStreak?: boolean;
+    lostStreak?: boolean; // Mantido para possível uso futuro, mas comeback_kid usará triggerComebackKid
+    triggerComebackKid?: boolean; // Novo parâmetro
   }) {
     try {
       const achievements = await this.getUserAchievements();
@@ -371,7 +372,7 @@ class GamificationService {
               const hour = stats.time.getHours();
               if (hour >= 22) shouldUnlock = true;
             }
-            if (achievement.id === 'comeback_kid' && stats.lostStreak) {
+            if (achievement.id === 'comeback_kid' && stats.triggerComebackKid) { // Usar triggerComebackKid
               shouldUnlock = true;
             }
             break;
