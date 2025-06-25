@@ -146,7 +146,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout }) => {
         <View style={styles.statItem}>
           <Icon name="fire" size={24} color={theme.colors.primary} />
           <Text style={[styles.statValue, { color: theme.colors.text }]}>{streak}</Text>
-          <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Dias de Sequência</Text>
+          <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>Recorde Sequência</Text>
         </View>
         <View style={styles.statItem}>
           <Icon name="check-circle" size={24} color={theme.colors.success} />

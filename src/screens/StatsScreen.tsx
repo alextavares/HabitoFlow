@@ -10,7 +10,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../contexts/ThemeContext';
 import { habitServices, authServices, isHabitScheduledForDate, Habit } from '../services/firebase'; // Importado isHabitScheduledForDate e Habit
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// import AsyncStorage from '@react-native-async-storage/async-storage'; // Removido
 
 const { width } = Dimensions.get('window');
 

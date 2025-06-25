@@ -127,7 +127,7 @@ const LoginScreenFirebase: React.FC<LoginScreenFirebaseProps> = ({ onLoginSucces
       Alert.alert('Sucesso! 🎉', 'Login com Google realizado!');
       onLoginSuccess(user);
     } catch (error: any) {
-      console.log('Google Sign-In Error:', error);
+      console.error('Google Sign-In Error:', error); // Alterado para console.error
       
       let errorMessage = 'Erro ao fazer login com Google';
       

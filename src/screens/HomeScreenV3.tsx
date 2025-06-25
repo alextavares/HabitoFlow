@@ -809,7 +809,7 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
         
         <View style={[styles.statCard, styles.glassmorphism]}>
           <Text style={styles.statNumber}>{globalMaxStreak}</Text>
-          <Text style={styles.statLabel}>Streak Max</Text>
+          <Text style={styles.statLabel}>Recorde Global</Text>
           <Text style={styles.statEmoji}>🏆</Text>
         </View>
       </View>

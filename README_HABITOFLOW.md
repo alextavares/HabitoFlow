@@ -94,7 +94,7 @@ src/
 ```
 
 ## 🚧 Pendências Conhecidas / Melhorias Futuras
--   **Cálculo de Streak para `comeback_kid`:** A detecção de "streak perdido significativo" para a conquista `comeback_kid` precisa de refinamento para cobrir todos os cenários de quebra (especialmente por inatividade prolongada que não passa pelo `toggleHabit`).
+-   **Conquista `comeback_kid`**: A lógica de detecção de quebra de streak foi aprimorada para incluir inatividade. Testes adicionais em cenários complexos de uso são recomendados para garantir robustez total.
 -   **Agendamento de Notificações Recorrentes:** O sistema atual agenda a *próxima* ocorrência. Para notificações que se repetem confiavelmente de acordo com a frequência (ex: um hábito de "Dias de Semana" que notifica toda Seg, Ter, Qua, Qui, Sex sem intervenção manual a cada vez), seria necessário um sistema de agendamento em background mais robusto ou múltiplas notificações agendadas.
 -   **Testes Unitários e de Integração:** Adicionar uma suíte de testes para garantir a estabilidade das lógicas complexas (streaks, gamificação, notificações).
 -   **Monetização:** Funcionalidades premium e lógica de compra/subscrição.
