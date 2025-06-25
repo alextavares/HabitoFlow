@@ -164,7 +164,7 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
         setHabits(habitsWithCompletion);
       } catch (error) {
         console.error('Erro ao processar hábitos:', error);
-        Alert.alert('Erro', `Não foi possível processar os hábitos: ${error}`);
+        Alert.alert('Erro', 'Não foi possível carregar seus hábitos. Verifique sua conexão ou tente novamente mais tarde.');
       } finally {
         setLoading(false);
       }
@@ -450,6 +450,7 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
       
       if (!userId) {
         Alert.alert('Erro', 'Usuário não autenticado');
+        setSaving(false); // Adicionado para resetar o estado de saving
         return;
       }
 
