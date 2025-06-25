@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NotificationService from './NotificationService';
-import { userServices } from './firebase';
+import { userServices, habitServices } from './firebase'; // Adicionado habitServices
 
 export interface Achievement {
   id: string;
@@ -341,10 +341,25 @@ class GamificationService {
             break;
 
           case 'completion':
-            if (achievement.id === 'perfect_day' && stats.completedToday === stats.totalHabits && stats.totalHabits > 0) {
+            if (achievement.id === 'perfect_day' && stats.totalHabits && stats.completedToday === stats.totalHabits && stats.totalHabits > 0) {
               shouldUnlock = true;
             }
-            // Adicionar lógica para perfect_week quando implementar tracking semanal
+            if (achievement.id === 'perfect_week') {
+              let perfectDaysInARow = 0;
+              const today = new Date();
+              for (let i = 0; i < achievement.requirement; i++) { // achievement.requirement para perfect_week é 7
+                const dayToCheck = new Date(today);
+                dayToCheck.setDate(today.getDate() - i);
+                if (await habitServices.checkIfDayWasPerfect(this.userId, dayToCheck)) {
+                  perfectDaysInARow++;
+                } else {
+                  break; // Sequência quebrada
+                }
+              }
+              if (perfectDaysInARow >= achievement.requirement) {
+                shouldUnlock = true;
+              }
+            }
             break;
 
           case 'special':

@@ -676,6 +676,40 @@ export const habitServices = {
         callback(sortedHabits);
       });
   },
+
+  async checkIfDayWasPerfect(userId: string, date: Date): Promise<boolean> {
+    try {
+      const allUserHabits = await this.getHabits(userId);
+      if (!allUserHabits || allUserHabits.length === 0) {
+        return false; // Nenhum hábito, então não pode ser um dia perfeito de hábitos
+      }
+
+      const scheduledForDate = allUserHabits.filter(habit =>
+        habit.isActive && isHabitScheduledForDate(habit, date)
+      );
+
+      if (scheduledForDate.length === 0) {
+        // Nenhum hábito agendado para este dia específico.
+        // Consideramos isso como não sendo um "dia perfeito" em termos de cumprimento de hábitos.
+        // Ou, dependendo da definição, poderia ser true se não havia nada a fazer.
+        // Para a conquista "semana perfeita", faz mais sentido que exija hábitos agendados.
+        return false;
+      }
+
+      for (const habit of scheduledForDate) {
+        if (!habit.id) continue; // Segurança, embora getHabits deva retornar com IDs
+        const completed = await this.isHabitCompletedOnDate(userId, habit.id, date);
+        if (!completed) {
+          return false; // Um dos hábitos agendados não foi completado
+        }
+      }
+
+      return true; // Todos os hábitos agendados para o dia foram completados
+    } catch (error) {
+      console.error(`Erro ao verificar dia perfeito para ${userId} em ${date.toISOString().split('T')[0]}:`, error);
+      return false; // Em caso de erro, assumir que não foi perfeito
+    }
+  },
 };
 
 // Helper para verificar se o hábito está agendado para um dia específico
