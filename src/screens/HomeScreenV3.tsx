@@ -407,13 +407,26 @@ const HomeScreenV3 = ({ navigation, user, onLogout }: HomeScreenV3Props) => {
           // Cancela a anterior para garantir que não haja duplicatas ou horários antigos
           NotificationService.cancelNotification(editingHabit.id);
           // Agenda a nova com os dados atualizados
-          NotificationService.scheduleNotification({
-            id: editingHabit.id,
+          // Precisamos construir o objeto hábito completo com as atualizações para o scheduleNotification
+          const habitToReschedule: Habit = {
+            ...(editingHabit as Habit), // Spread do hábito original (garantir que não é null)
             name: updates.name,
-            reminderTime: updates.reminderTime,
             icon: updates.icon,
-            isActive: true, // Se notificationsEnabled é true, o hábito deve ser ativo para notificação
-          });
+            color: updates.color,
+            targetDays: updates.targetDays,
+            reminderTime: updates.reminderTime,
+            frequency: updates.frequency,
+            customDays: updates.customDays === null ? undefined : updates.customDays, // Se for null, passar undefined
+            isActive: true, // Assumimos que se está habilitando/reagendando notificação, o hábito está ativo
+            // Campos como completed, streak, completedDays, createdAt, maxStreak não são estritamente necessários para scheduleNotification
+            // mas podem ser incluídos se a tipagem de Habit em scheduleNotification for rigorosa.
+            // Para a função scheduleNotification atual, id, name, reminderTime, isActive, frequency, customDays são os mais importantes.
+            completed: editingHabit.completed, // Manter o estado atual
+            streak: editingHabit.streak, // Manter o estado atual
+            completedDays: editingHabit.completedDays, // Manter o estado atual
+            createdAt: editingHabit.createdAt, // Manter o estado atual
+          };
+          NotificationService.scheduleNotification(habitToReschedule);
         } else {
           // Se as notificações foram desabilitadas para este hábito
           NotificationService.cancelNotification(editingHabit.id);

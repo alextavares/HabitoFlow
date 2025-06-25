@@ -2,6 +2,7 @@ import PushNotification, { Importance } from 'react-native-push-notification';
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { isHabitScheduledForDate, Habit } from './firebase'; // Adicionado import
 
 class NotificationService {
   constructor() {
@@ -89,30 +90,66 @@ class NotificationService {
   };
 
   // Agendar notificação local
-  scheduleNotification = (habit: any) => {
-    if (!habit.reminderTime || !habit.isActive) return;
-
-    const [hours, minutes] = habit.reminderTime.split(':');
-    const notificationTime = new Date();
-    notificationTime.setHours(parseInt(hours));
-    notificationTime.setMinutes(parseInt(minutes));
-    notificationTime.setSeconds(0);
-
-    // Se o horário já passou hoje, agenda para amanhã
-    if (notificationTime.getTime() < Date.now()) {
-      notificationTime.setDate(notificationTime.getDate() + 1);
+  scheduleNotification = (habit: Habit) => { // Tipo do parâmetro atualizado
+    if (!habit.reminderTime || !habit.isActive || !habit.id) {
+      // console.log(`Notificação não agendada para ${habit.name} (sem reminderTime, inativo ou sem ID)`);
+      return;
     }
 
-    PushNotification.localNotificationSchedule({
-      id: habit.id,
-      channelId: 'habit-reminders',
-      title: '🎯 Hora do Hábito!',
-      message: `Não esqueça de completar: ${habit.name}`,
-      date: notificationTime,
-      repeatType: 'day',
-      allowWhileIdle: true,
-      userInfo: { habitId: habit.id },
-    });
+    const [hoursStr, minutesStr] = habit.reminderTime.split(':');
+    const hours = parseInt(hoursStr);
+    const minutes = parseInt(minutesStr);
+
+    if (isNaN(hours) || isNaN(minutes)) {
+      console.error(`Horário de lembrete inválido para o hábito ${habit.id}: ${habit.reminderTime}`);
+      return;
+    }
+
+    let candidateDate = new Date();
+    candidateDate.setHours(hours, minutes, 0, 0); // Define o horário para hoje
+
+    const now = new Date();
+
+    // Se o horário candidato para hoje já passou, começar a busca a partir de amanhã
+    if (candidateDate.getTime() <= now.getTime()) {
+      candidateDate.setDate(candidateDate.getDate() + 1);
+    }
+
+    let nextNotificationDate: Date | null = null;
+
+    for (let i = 0; i < 365; i++) { // Loop de segurança para no máximo 1 ano à frente
+      // A condição `candidateDate > now` não é mais estritamente necessária aqui se já avançamos
+      // mas é uma boa segurança. No entanto, o principal é `isHabitScheduledForDate`.
+      // Se candidateDate for hoje mas o horário ainda não passou, a condição original funcionaria.
+      // O importante é que, se o horário de hoje já passou, começamos amanhã.
+      if (isHabitScheduledForDate(habit, candidateDate)) {
+        // Adicionamos a verificação `candidateDate > now` para garantir que não agendamos para o passado
+        // se, por acaso, o primeiro dia válido encontrado for hoje mas o horário exato já passou
+        // (embora o ajuste inicial de candidateDate devesse prevenir isso).
+        // Para maior clareza: a data candidata deve ser futura.
+        if (candidateDate.getTime() > now.getTime()) {
+             nextNotificationDate = new Date(candidateDate); // Cria nova instância da data
+             break;
+        }
+      }
+      candidateDate.setDate(candidateDate.getDate() + 1); // Avança para o próximo dia
+    }
+
+    if (nextNotificationDate) {
+      PushNotification.localNotificationSchedule({
+        id: habit.id, // Garante que o ID é uma string
+        channelId: 'habit-reminders',
+        title: `🎯 ${habit.name}`, // Título mais específico
+        message: `Lembrete para completar seu hábito: ${habit.name}`,
+        date: nextNotificationDate,
+        allowWhileIdle: true,
+        userInfo: { habitId: habit.id, type: 'habitReminder' }, // Adicionar tipo para identificação
+        // repeatType removido
+      });
+      // console.log(`Notificação agendada para ${habit.name} em ${nextNotificationDate.toLocaleString()}`);
+    } else {
+      // console.warn(`Não foi possível encontrar uma data válida para agendar notificação para o hábito ${habit.id} nos próximos 365 dias.`);
+    }
   };
 
   // Cancelar notificação
