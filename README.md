@@ -1,97 +1,256 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# 🎯 HabitoFlow - Documentação Completa do Projeto
 
-# Getting Started
+<div align="center">
+  <img src="img_claude/logo.png" alt="HabitoFlow Logo" width="120"/>
+  
+  # HabitoFlow
+  ### Transformando hábitos em conquistas
+  
+  [![React Native](https://img.shields.io/badge/React%20Native-0.73-blue.svg)](https://reactnative.dev/)
+  [![Firebase](https://img.shields.io/badge/Firebase-Latest-orange.svg)](https://firebase.google.com/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+  [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+</div>
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## 📋 Índice de Documentação
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### 🚀 Getting Started
+1. **[README Original](README_HABITOFLOW.md)** - Configuração inicial e features básicas
+2. **[Quick Start Guide](QUICK_START.md)** - Guia rápido para rodar o app
+3. **[Professional Improvements](PROFESSIONAL_IMPROVEMENTS.md)** - Melhorias implementadas recentemente
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### 📱 Documentação Técnica
+4. **[Complete Improvement Plan](COMPLETE_IMPROVEMENT_PLAN.md)** - Roadmap completo de melhorias (NEW!)
+5. **[Technical Implementation Guide](TECHNICAL_IMPLEMENTATION_GUIDE.md)** - Guia técnico detalhado (NEW!)
+6. **[Design System](design-system.md)** - Padrões de design e componentes
+7. **[Android Setup](ANDROID_SETUP.md)** - Configuração para Android
+8. **[Firebase Setup](FIREBASE_SETUP.md)** - Configuração do Firebase
 
-```sh
-# Using npm
+### 💼 Documentação de Negócios
+9. **[Marketing & Launch Strategy](MARKETING_LAUNCH_STRATEGY.md)** - Estratégia completa de marketing (NEW!)
+10. **[Executive Summary & Pitch](EXECUTIVE_SUMMARY_PITCH.md)** - Pitch para investidores (NEW!)
+
+### 🔧 Troubleshooting
+11. **[Resolução de Problemas](RESOLUCAO_PROBLEMAS.md)** - Soluções para erros comuns
+12. **[Corrigir Problemas](CORRIGIR_PROBLEMAS.md)** - Guia de troubleshooting
+
+---
+
+## 🎯 Visão Geral do Projeto
+
+O **HabitoFlow** é um aplicativo revolucionário de rastreamento de hábitos que combina:
+
+- 🎮 **Gamificação Avançada** - Sistema de pontos, níveis e conquistas
+- 👥 **Features Sociais** - Desafios com amigos e accountability
+- 🤖 **IA Personalizada** - Coach virtual e insights inteligentes
+- 📊 **Analytics Profissional** - Dashboards e relatórios detalhados
+- 🎨 **Design Premium** - Interface moderna com glassmorphism
+
+---
+
+## 🚀 Status do Desenvolvimento
+
+### ✅ Implementado
+- [x] Autenticação completa (Email/Google)
+- [x] CRUD de hábitos com frequências customizadas
+- [x] Sistema de gamificação (pontos, conquistas, níveis)
+- [x] Dashboard profissional com gráficos
+- [x] Notificações inteligentes
+- [x] Tema claro/escuro
+- [x] Exportação de relatórios (HTML/CSV)
+- [x] Onboarding screen
+- [x] Skeleton loaders
+- [x] Haptic feedback
+
+### 🚧 Em Desenvolvimento
+- [ ] Sistema de assinatura Premium
+- [ ] Features sociais (amigos, desafios)
+- [ ] Integração com wearables
+- [ ] Widget para home screen
+- [ ] Modo offline completo
+
+### 🔮 Futuro
+- [ ] IA para previsão de comportamento
+- [ ] Marketplace de hábitos
+- [ ] API pública
+- [ ] Versão enterprise
+
+---
+
+## 💻 Tecnologias Utilizadas
+
+### Frontend
+- **React Native** 0.73
+- **TypeScript** 5.0
+- **React Navigation** 6.x
+- **React Native Reanimated** 3.x
+
+### Backend
+- **Firebase Auth** - Autenticação
+- **Firestore** - Banco de dados
+- **Firebase Storage** - Armazenamento
+- **Cloud Functions** - Lógica serverless
+
+### Ferramentas
+- **Metro** - Bundler
+- **Flipper** - Debugging
+- **Reactotron** - Debugging avançado
+
+---
+
+## 🏃‍♂️ Como Executar
+
+### Pré-requisitos
+- Node.js 18+
+- React Native CLI
+- Android Studio / Xcode
+- Firebase project configurado
+
+### Instalação
+
+```bash
+# Clone o repositório
+git clone https://github.com/seu-usuario/habitoflow.git
+
+# Entre no diretório
+cd habitoflow/HabitoFlow
+
+# Instale as dependências
+npm install
+
+# iOS apenas
+cd ios && pod install && cd ..
+```
+
+### Executar
+
+**Web (Recomendado para desenvolvimento):**
+```bash
+npm run web
+# Acesse http://localhost:8080
+```
+
+**Android:**
+```bash
+# Terminal 1
 npm start
 
-# OR using Yarn
-yarn start
-```
-
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
+# Terminal 2
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### iOS
+**iOS:**
+```bash
+# Terminal 1
+npm start
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+# Terminal 2
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+---
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## 📊 Arquitetura do Projeto
 
-## Step 3: Modify your app
+```
+HabitoFlow/
+├── src/
+│   ├── components/        # Componentes reutilizáveis
+│   ├── screens/          # Telas do app
+│   ├── services/         # Lógica de negócio
+│   ├── navigation/       # Configuração de rotas
+│   ├── contexts/         # React Context
+│   └── utils/           # Funções auxiliares
+├── android/             # Código nativo Android
+├── ios/                # Código nativo iOS
+└── docs/               # Documentação adicional
+```
 
-Now that you have successfully run the app, let's make changes!
+---
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## 🤝 Como Contribuir
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+1. Faça um Fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+### Padrões de Código
+- Use TypeScript para todo código novo
+- Siga o ESLint config
+- Escreva testes para features críticas
+- Documente funções complexas
 
-## Congratulations! :tada:
+---
 
-You've successfully run and modified your React Native App. :partying_face:
+## 📈 Métricas de Sucesso
 
-### Now what?
+### KPIs Principais
+- **Retenção D7**: > 40%
+- **DAU/MAU**: > 40%
+- **Conclusão de Hábitos**: > 70%
+- **NPS**: > 50
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+### Metas 2025
+- 🎯 2M downloads
+- 💰 R$ 400K MRR
+- 🌍 Expansão para 5 países
+- 🏆 Top 10 Produtividade
 
-# Troubleshooting
+---
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+## 🛡️ Segurança
 
-# Learn More
+- ✅ Autenticação 2FA disponível
+- ✅ Dados criptografados em repouso
+- ✅ HTTPS em todas as comunicações
+- ✅ LGPD/GDPR compliance
+- ✅ Auditoria de segurança trimestral
 
-To learn more about React Native, take a look at the following resources:
+---
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+## 📞 Suporte e Contato
+
+### Canais de Suporte
+- 📧 Email: support@habitoflow.com
+- 💬 Chat in-app (Premium)
+- 📚 Central de Ajuda: help.habitoflow.com
+- 🐛 Bug Reports: GitHub Issues
+
+### Comunidade
+- 👥 Discord: discord.gg/habitoflow
+- 📱 Instagram: @habitoflow
+- 🐦 Twitter: @habitoflow
+
+---
+
+## 📄 Licença
+
+Este projeto está licenciado sob a MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
+
+---
+
+## 🙏 Agradecimentos
+
+- Time de desenvolvimento
+- Beta testers
+- Comunidade open source
+- Você, por usar o HabitoFlow!
+
+---
+
+<div align="center">
+  <p>Feito com ❤️ pela equipe HabitoFlow</p>
+  <p>
+    <a href="https://habitoflow.com">Website</a> •
+    <a href="https://github.com/habitoflow">GitHub</a> •
+    <a href="https://twitter.com/habitoflow">Twitter</a>
+  </p>
+</div>
+
+---
+
+**"O sucesso é a soma de pequenos esforços repetidos dia após dia"** 🎯

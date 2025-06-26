@@ -1,3 +1,6 @@
 @echo off
+set JAVA_HOME=C:\Program Files\Java\jdk-17
+echo Limpando o cache do Gradle...
+set "JAVA_HOME=C:\Program Files\Java\jdk-17" && cd android && gradlew clean && cd ..
 echo Iniciando HabitoFlow no Android...
 npx @react-native-community/cli@latest run-android

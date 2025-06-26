@@ -1,4 +1,4 @@
-buildscript {
+    buildscript {
     ext {
         buildToolsVersion = "35.0.0"
         minSdkVersion = 24
@@ -10,10 +10,13 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+        maven { url 'https://repo.gradle.org/gradle/m2-local'}
+        maven { url '$rootDir/../node_modules/react-native/android' }
     }
     dependencies {
         classpath("com.android.tools.build:gradle:8.4.1") // Especificar versão do Android Gradle Plugin
-        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("@react-native/gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion") // Usar a variável kotlinVersion
         classpath("com.google.gms:google-services:4.3.15")
     }
@@ -23,6 +26,9 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+        maven { url 'https://repo.gradle.org/gradle/m2-local'}
+        maven { url '$rootDir/../node_modules/react-native/android' }
     }
     
     configurations.all {
